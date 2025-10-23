@@ -205,7 +205,7 @@ const Homepage = () => {
     <div className="p-10 sm:text-sm sm:p-6">
       <div className="flex flex-col justify-center items-center w-full">
         <h1 className="text-5xl my-7 text-center">
-          Welcome to Fit<span className="bg-muted rounded-xl px-2">Ai</span>!
+          Welcome to Guls Fitness Center<span className="bg-muted rounded-xl px-2">Ai</span>!
         </h1>
         <div>One Place For All Your Fitness Needs.</div>
       </div>
