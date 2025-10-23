@@ -1,0 +1,63 @@
+.chat{
+    @apply px-5 py-3 rounded-2xl bg-muted mb-4 max-w-[75vw] text-wrap mx-auto;
+    animation: chatPop 0.4s ease-out;
+    animation: chatSlideIn 0.4s ease-in-out;
+}
+.skeletonChat{
+    @apply flex flex-col items-start space-y-2 px-5 py-3 rounded-2xl bg-muted mb-4 w-[75vw] justify-start mx-auto;
+    animation: chatPop 0.4s ease-out;
+    animation: chatSlideIn 0.4s ease-in-out;
+}
+.skeleton1{
+    @apply h-4 w-[90%];
+}
+.skeleton2{
+    @apply h-4 w-[80%];
+}
+.inputs{
+    @apply mb-4 flex justify-center;
+    animation: inputNbtn 0.5s ease-in;
+}
+.submitbtn{
+    @apply mb-4 flex justify-center;
+    animation: inputNbtn 0.5s ease-in;
+}
+.bfpInput{
+    @apply mb-4 w-fit mx-auto;
+    animation: inputNbtn 0.5s ease-in;
+}
+.ToggleGroup{
+    @apply flex justify-center items-center mb-4;
+    animation: inputNbtn 0.5s ease-in;
+}
+
+@keyframes chatPop {
+    0% {
+      transform: scale(0.8);
+      opacity: 0;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+  @keyframes chatSlideIn {
+    0% {
+      opacity: 0;
+      transform: translateY(10px) translateX(10px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0) translateX(0);
+    }
+  }
+  @keyframes inputNbtn {
+    0%{
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    100%{
+        opacity:1;
+        transform: translateY(0);
+    }
+  }
