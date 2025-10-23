@@ -1,24 +1,25 @@
-import { generateText } from "ai"
-import { openai } from "@ai-sdk/openai"
+// app/api/chat/route.ts
+import OpenAI from "openai"
 import { NextResponse } from "next/server"
 
 export const runtime = "nodejs"
+
+const client = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY!,
+})
 
 export async function POST(req: Request) {
   try {
     const { prompt } = await req.json()
 
-    const { text } = await generateText({
-      model: openai("gpt-4o-mini"),
-      prompt,
+    const response = await client.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [{ role: "user", content: prompt }],
     })
 
-    return NextResponse.json({ text })
+    return NextResponse.json({ text: response.choices[0].message.content })
   } catch (error) {
-    console.error("API Error:", error)
-    return NextResponse.json(
-      { error: "Internal Server Error" },
-      { status: 500 }
-    )
+    console.error("OpenAI Error:", error)
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 })
   }
 }
