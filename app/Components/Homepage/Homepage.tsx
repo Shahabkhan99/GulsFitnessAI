@@ -209,9 +209,9 @@ const Homepage = () => {
         </h1>
         <div>One Place For All Your Fitness Needs.</div>
       </div>
-      <div className="flex flex-col justify-end items-end w-full h-full mt-14">
+      <div className="flex flex-col justify-center items-end w-full h-full mt-14">
         <div className={styles.chat}>Hello, What is your name?</div>
-        <div className="flex flex-col justify-end items-end">
+        <div className="flex flex-col justify-center items-end">
           <Input
             autoComplete="off"
             type="text"
@@ -233,11 +233,11 @@ const Homepage = () => {
         </div>
 
         {chatTracker.nameEntered && (
-          <div className="flex flex-col justify-end items-end">
+          <div className="flex flex-col justify-center items-end">
             <div className={styles.chat}>
               Hi {details.name}, Lets get you in the best shape of your life!
             </div>
-            <div className="flex flex-col justify-end items-end">
+            <div className="flex flex-col justify-center items-end">
               <div className={styles.chat}>Tell me about yourself</div>
               <Input
                 disabled={chatTracker.ageAndGenderEntered}
@@ -281,11 +281,11 @@ const Homepage = () => {
               </Button>
             </div>
             {chatTracker.ageAndGenderEntered && (
-              <div className="flex flex-col justify-end items-end">
+              <div className="flex flex-col justify-center items-end">
                 <div className={styles.chat}>
                   Alright, now lets calculate you body Fat percentage
                 </div>
-                <div className="flex flex-col justify-end items-end">
+                <div className="flex flex-col justify-center items-end">
                   <Input
                     autoComplete="off"
                     disabled={chatTracker.bodyFatEntered}
@@ -348,11 +348,11 @@ const Homepage = () => {
               </div>
             )}
             {chatTracker.bodyFatEntered && (
-              <div className="flex flex-col justify-end items-end">
+              <div className="flex flex-col justify-center items-end">
                 <div className={styles.chat}>
                   Your body fat percentage is {bodyFatPercentage.toFixed(2)}%
                 </div>
-                <div className="flex flex-col justify-end items-end">
+                <div className="flex flex-col justify-center items-end">
                   <div className={styles.chat}>
                     What are your fitness goals?
                   </div>
@@ -408,7 +408,7 @@ const Homepage = () => {
 
             {chatTracker.AimEntered &&
               (typeof aiWoResp === "string" ? (
-                <div className="flex flex-col justify-end items-end">
+                <div className="flex flex-col justify-center items-end">
                   <div className={styles.chat}>
                     Here is a your personalised workout plan
                   </div>
@@ -447,10 +447,10 @@ const Homepage = () => {
                 <div>{aiWoResp}</div>
               ))}
             {chatTracker.AimEntered && (
-              <div className="flex flex-col justify-end items-end"></div>
+              <div className="flex flex-col justify-center items-end"></div>
             )}
             {dispDiet === "Yes" ? (
-              <div className="flex flex-col justify-end items-end">
+              <div className="flex flex-col justify-center items-end">
                 <div className={styles.chat}>
                   Okay! What are your dietary prefrences.
                 </div>
@@ -500,7 +500,7 @@ const Homepage = () => {
                 </Button>
               </div>
             ) : dispDiet === "No" ? (
-              <div className="flex flex-col justify-end items-end">
+              <div className="flex flex-col justify-center items-end">
                 <div className={styles.chat}>
                   You are all done! All the best in your Fitness Journey!
                 </div>
@@ -515,7 +515,7 @@ const Homepage = () => {
             {chatTracker.dietEntered &&
               (typeof aiDietResp === "string" ? (
                 <div className="w-full">
-                  <div className="flex flex-col justify-end items-end">
+                  <div className="flex flex-col justify-center items-end">
                     <div
                       className={styles.chat}
                       dangerouslySetInnerHTML={{
