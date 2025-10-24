@@ -1,4 +1,4 @@
-# FitAI - AI-Powered Fitness Assistant
+# GulsFitAI - AI-Powered Fitness Assistant
 
 ![Next.js](https://img.shields.io/badge/Next.js-15-blue.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-✔-blue.svg)
@@ -8,7 +8,7 @@
 
 ## Overview
 
-**FitAI** is an AI-powered fitness assistant that generates personalized workout and diet plans based on user needs. Using **Gemini AI 2.0 Flash**, it provides intelligent fitness recommendations and allows users to download their plans as PDFs.
+**GulsFitAI** is an AI-powered fitness assistant that generates personalized workout and diet plans based on user needs. Using **Gemini AI 2.0 Flash**, it provides intelligent fitness recommendations and allows users to download their plans as PDFs.
 
 ## Features
 
@@ -50,11 +50,11 @@ npm run dev
 
 ## API Integration
 
-FitAI utilizes the **Gemini AI 2.0** Flash API to analyze user input and generate optimized plans. Ensure you have API access before running the project.
+FitAI utilizes the **Gemini AI 2.5** Flash API to analyze user input and generate optimized plans. Ensure you have API access before running the project.
 
 ## Live Demo
 
-🚀 [Try FitAI Live](https://fitness-ai-weld.vercel.app/)
+🚀 [Try FitAI Live](https://guls-fitness.vercel.app/)
 
 ## Contributing
 
