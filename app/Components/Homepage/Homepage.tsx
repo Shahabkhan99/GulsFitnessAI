@@ -7,17 +7,31 @@ import { Skeleton } from "../ui/skeleton";
 import { Button } from "../ui/button";
 import { jsPDF } from "jspdf";
 import InstallIcon from "@/app/svg/Install";
+import ReactMarkdown from "react-markdown"; // Added for safe markdown rendering
+
+// 1. Define an interface for your details state
+interface UserDetails {
+  name: string;
+  age: string;
+  height: string;
+  weight: string;
+  neck: string;
+  waist: string;
+  hips: string;
+}
 
 const Homepage = () => {
-  const [details, setDetails] = useState({
+  // 2. Initialize all form fields as strings
+  const [details, setDetails] = useState<UserDetails>({
     name: "",
-    age: Number(""),
-    height: Number(""),
-    weight: Number(""),
-    neck: Number(""),
-    waist: Number(""),
-    hips: Number(""),
+    age: "",
+    height: "",
+    weight: "",
+    neck: "",
+    waist: "",
+    hips: "",
   });
+
   const [fitnessGoals, setFitnessGoals] = useState<
     "Loose Weight" | "Gain Weight" | "Toned Muscles"
   >("Loose Weight");
@@ -30,55 +44,26 @@ const Homepage = () => {
     AimEntered: false,
     dietEntered: false,
   });
-  // const [aiResp, setAiResp] = useState<React.JSX.Element | string>(
 
-  //   <div className="flex flex-col space-y-2">
-  //     <Skeleton className="h-4 w-[500px]" />
-  //     <Skeleton className="h-4 w-[450px]" />
-  //     <Skeleton className="h-4 w-[500px]" />
-  //     <Skeleton className="h-4 w-[450px]" />
-  //   </div>,
-
-  // );
-  // const [aiResp, setAiResp] = useState<React.JSX.Element | string>({
-
-  //   workoutPlan:<div className="flex flex-col space-y-2">
-  //     <Skeleton className="h-4 w-[500px]" />
-  //     <Skeleton className="h-4 w-[450px]" />
-  //     <Skeleton className="h-4 w-[500px]" />
-  //     <Skeleton className="h-4 w-[450px]" />
-  //   </div>,
-  //   dietPlan:<div className="flex flex-col space-y-2">
-  //   <Skeleton className="h-4 w-[500px]" />
-  //   <Skeleton className="h-4 w-[450px]" />
-  //   <Skeleton className="h-4 w-[500px]" />
-  //   <Skeleton className="h-4 w-[450px]" />
-  // </div>,
-  // }
-
-  // );
   const [aiWoResp, setAiWoResp] = useState<React.JSX.Element | string>(() => (
-     <div className={styles.skeletonChat}>
-      
+    <div className={styles.skeletonChat}>
       <Skeleton className={styles.skeleton1} />
       <Skeleton className={styles.skeleton2} />
       <Skeleton className={styles.skeleton1} />
       <Skeleton className={styles.skeleton2} />
-    
-  </div>
+    </div>
   ));
   const [aiDietResp, setAiDietResp] = useState<React.JSX.Element | string>(
     () => (
       <div className={styles.skeletonChat}>
-      
         <Skeleton className={styles.skeleton1} />
         <Skeleton className={styles.skeleton2} />
         <Skeleton className={styles.skeleton1} />
         <Skeleton className={styles.skeleton2} />
-      
-    </div>
-  ));
-  // const [prompt, setPrompt] = useState("");
+      </div>
+    )
+  );
+
   const [dispDiet, setDispdiet] = useState<"Yes" | "No">();
   const [diet, setdiet] = useState<
     "Non-Vegeterian" | "Vegeterian" | "Eggeterian"
@@ -93,55 +78,82 @@ const Homepage = () => {
   ) => {
     setchatTracker({ ...chatTracker, [e.currentTarget.name]: true });
   };
+
+  // 3. Made BFP calculation safer
   const calculateBFP = () => {
     const log10 = Math.log10;
-    setbodyFatPercentage(
-      gender === "Female"
-        ? 163.205 *
-            log10(
-              Number(details.waist) +
-                Number(details.hips) -
-                Number(details.neck)
-            ) -
-            97.684 * log10(Number(details.height)) -
-            78.387
-        : 86.01 * log10(Number(details.waist) - Number(details.neck)) -
-            70.041 * log10(Number(details.height)) +
-            36.76
-    );
-  };
 
-  const promptSend = async (promptText: string, type: "workout" | "diet") => {
-    const response = await fetch("/api/gemini", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt: promptText }),
-    });
-    const data = await response.json();
+    // Convert and validate inputs
+    const height = Number(details.height);
+    const waist = Number(details.waist);
+    const neck = Number(details.neck);
 
-    // setAiResp(data.text);
-    // type==="workout" ? setAiWoResp(data.text) : type==="diet" ? setAiDietResp(data.text) : null;
-    if (type === "workout") {
-      setAiWoResp(data.text);
-    } else if (type === "diet") {
-      setAiDietResp(data.text);
+    // Basic validation to prevent division by zero or log(0)
+    if (height <= 0 || waist <= 0 || neck <= 0) {
+      setbodyFatPercentage(0); // Set to 0 or show an error
+      return;
     }
-    return data;
+
+    let bfp;
+    if (gender === "Female") {
+      const hips = Number(details.hips);
+      if (hips <= 0) {
+        setbodyFatPercentage(0);
+        return;
+      }
+      bfp =
+        163.205 * log10(waist + hips - neck) -
+        97.684 * log10(height) -
+        78.387;
+    } else {
+      bfp =
+        86.01 * log10(waist - neck) - 70.041 * log10(height) + 36.76;
+    }
+
+    // Final check for NaN or Infinity
+    if (!isFinite(bfp) || isNaN(bfp)) {
+      setbodyFatPercentage(0);
+    } else {
+      setbodyFatPercentage(bfp);
+    }
   };
 
-  function parseMarkdownToHtml(text: string): string {
-    // Convert **bold** text to <strong>bold</strong>
-    text = String(text);
-    text = text.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+  // 4. Added robust error handling to API calls
+  const promptSend = async (promptText: string, type: "workout" | "diet") => {
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: promptText }),
+      });
 
-    // Convert * bullet points into <ul><li></li></ul>
-    text = text.replace(/\n\* (.*?)\n/g, "<ul><li>$1</li></ul>");
+      // Check if the request was successful
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.status} ${response.statusText}`);
+      }
 
-    // Convert line breaks into <br>
-    text = text.replace(/\n/g, "<br>");
+      const data = await response.json();
+      const resultText = data.text || "Sorry, I received an empty response.";
 
-    return text;
-  }
+      if (type === "workout") {
+        setAiWoResp(resultText);
+      } else if (type === "diet") {
+        setAiDietResp(resultText);
+      }
+    } catch (error) {
+      console.error("Failed to send prompt:", error);
+      const errorMsg = "Sorry, something went wrong. Please try again later.";
+
+      // Show an error message to the user
+      if (type === "workout") {
+        setAiWoResp(errorMsg);
+      } else if (type === "diet") {
+        setAiDietResp(errorMsg);
+      }
+    }
+  };
+
+  // Kept this function for PDF generation
   const parseMarkdownToText = (markdown: string) => {
     markdown = String(markdown);
     return markdown
@@ -152,9 +164,17 @@ const Homepage = () => {
       .replace(/\n/g, "\n"); // Preserve line breaks
   };
 
-  const generateWoPdf = () => {
+  // 5. Created a single, reusable PDF generator
+  const generatePdf = (content: string, fileName: string) => {
     const formattedMarkdown =
-      typeof aiWoResp === "string" ? parseMarkdownToText(aiWoResp) : "";
+      typeof content === "string" ? parseMarkdownToText(content) : "";
+
+    // Add a check in case the content isn't a string yet (e.g., still skeleton)
+    if (!formattedMarkdown || typeof content !== "string") {
+      alert("The plan is not ready to be downloaded yet.");
+      return;
+    }
+
     const pdf = new jsPDF({
       orientation: "portrait",
       unit: "mm",
@@ -166,6 +186,7 @@ const Homepage = () => {
     const lineHeight = 7;
     let y = margin;
     const textLines = pdf.splitTextToSize(formattedMarkdown, pageWidth);
+
     textLines.forEach((line: string) => {
       if (y + lineHeight > pageHeight - margin) {
         pdf.addPage();
@@ -174,38 +195,15 @@ const Homepage = () => {
       pdf.text(line, margin, y);
       y += lineHeight;
     });
-    pdf.save("WorkoutPlan.pdf");
-  };
-  const generateDietPdf = () => {
-    const formattedMarkdown =
-      typeof aiDietResp === "string" ? parseMarkdownToText(aiDietResp) : "";
-    const pdf = new jsPDF({
-      orientation: "portrait",
-      unit: "mm",
-      format: "a4",
-    });
-    const margin = 10;
-    const pageHeight = pdf.internal.pageSize.getHeight();
-    const pageWidth = pdf.internal.pageSize.getWidth() - margin * 2;
-    const lineHeight = 7;
-    let y = margin;
-    const textLines = pdf.splitTextToSize(formattedMarkdown, pageWidth);
-    textLines.forEach((line: string) => {
-      if (y + lineHeight > pageHeight - margin) {
-        pdf.addPage();
-        y = margin;
-      }
-      pdf.text(line, margin, y);
-      y += lineHeight;
-    });
-    pdf.save("DietPlan.pdf");
+
+    pdf.save(fileName);
   };
 
   return (
     <div className="p-10 sm:text-sm sm:p-6">
       <div className="flex flex-col justify-center items-center w-full">
         <h1 className="text-5xl my-7 text-center">
-          Welcome to Fit<span className="bg-muted rounded-xl px-2">Ai</span>!
+          Welcome to Gul's Fitness Club<span className="bg-muted rounded-xl px-2">Ai</span>!
         </h1>
         <div>One Place For All Your Fitness Needs.</div>
       </div>
@@ -218,6 +216,7 @@ const Homepage = () => {
             disabled={chatTracker.nameEntered}
             className={styles.inputs}
             placeholder="Enter Your Name"
+            aria-label="Enter Your Name" // 8. Added aria-label
             name="name"
             value={details.name}
             onChange={changeHandler}
@@ -245,27 +244,30 @@ const Homepage = () => {
                 type="number"
                 autoComplete="off"
                 placeholder="Enter your age"
+                aria-label="Enter your age" // 8. Added aria-label
                 name="age"
                 onChange={changeHandler}
               ></Input>
               <div className="flex justify-center mr-2">
+                {/* 7. Used onValueChange for ToggleGroup */}
                 <ToggleGroup
                   disabled={chatTracker.ageAndGenderEntered}
                   type="single"
                   variant="outline"
                   className={styles.ToggleGroup}
+                  onValueChange={(value: "Male" | "Female" | "") => {
+                    if (value) setGender(value);
+                  }}
                 >
                   <ToggleGroupItem
                     className={styles.toggleBtn}
                     value={"Male"}
-                    onClick={() => setGender("Male")}
                   >
                     Male
                   </ToggleGroupItem>
                   <ToggleGroupItem
                     className={styles.toggleBtn}
                     value={"Female"}
-                    onClick={() => setGender("Female")}
                   >
                     Female
                   </ToggleGroupItem>
@@ -292,6 +294,7 @@ const Homepage = () => {
                     type="number"
                     className={styles.bfpInput}
                     placeholder="Weight in kg"
+                    aria-label="Weight in kg" // 8. Added aria-label
                     name="weight"
                     onChange={changeHandler}
                   ></Input>
@@ -301,6 +304,7 @@ const Homepage = () => {
                     type="number"
                     className={styles.bfpInput}
                     placeholder="Height in inches"
+                    aria-label="Height in inches" // 8. Added aria-label
                     name="height"
                     onChange={changeHandler}
                   ></Input>
@@ -310,6 +314,7 @@ const Homepage = () => {
                     type="number"
                     className={styles.bfpInput}
                     placeholder="Neck in inches"
+                    aria-label="Neck in inches" // 8. Added aria-label
                     name="neck"
                     onChange={changeHandler}
                   ></Input>
@@ -319,6 +324,7 @@ const Homepage = () => {
                     autoComplete="off"
                     className={styles.bfpInput}
                     placeholder="Waist in inches"
+                    aria-label="Waist in inches" // 8. Added aria-label
                     name="waist"
                     onChange={changeHandler}
                   ></Input>
@@ -329,6 +335,7 @@ const Homepage = () => {
                       className={styles.bfpInput}
                       type="number"
                       placeholder="Hips in inches"
+                      aria-label="Hips in inches" // 8. Added aria-label
                       name="hips"
                       onChange={changeHandler}
                     ></Input>
@@ -356,32 +363,33 @@ const Homepage = () => {
                   <div className={styles.chat}>
                     What are your fitness goals?
                   </div>
+                  {/* 7. Used onValueChange for ToggleGroup */}
                   <ToggleGroup
                     disabled={chatTracker.AimEntered}
                     type="single"
                     variant="outline"
                     className={styles.ToggleGroup}
+                    onValueChange={(
+                      value: "Loose Weight" | "Gain Weight" | "Toned Muscles"
+                    ) => {
+                      if (value) setFitnessGoals(value);
+                    }}
                   >
                     <ToggleGroupItem
                       className={styles.toggleBtn}
                       value="Loose Weight"
-                      onClick={() => {
-                        setFitnessGoals("Loose Weight");
-                      }}
                     >
                       Loose Weight
                     </ToggleGroupItem>
                     <ToggleGroupItem
                       className={styles.toggleBtn}
                       value="Gain Weight"
-                      onClick={() => setFitnessGoals("Gain Weight")}
                     >
                       Gain Weight
                     </ToggleGroupItem>
                     <ToggleGroupItem
                       className={styles.toggleBtn}
                       value="Toned Muscles"
-                      onClick={() => setFitnessGoals("Toned Muscles")}
                     >
                       Toned Muscles
                     </ToggleGroupItem>
@@ -392,8 +400,6 @@ const Homepage = () => {
                     name="AimEntered"
                     onClick={(e) => {
                       chatHandler(e);
-                      // const newPrompt = `Hi I am a ${details.age} year old ${gender} with ${details.weight} kg weight and ${details.height} inches height and ${bodyFatPercentage}% body Fat percentage I aim to have ${fitnessGoals} create a workout routine/plan for me. Reply very concisely with only the workout plan and absolutely nothing else. The plan should be in clear and in detail. No extra information or text just the workout plan since I want to copy and paste it.`;
-                      // setPrompt(prompt);
                       promptSend(
                         `Hi I am a ${details.age} year old ${gender} with ${details.weight} kg weight and ${details.height} inches height and ${bodyFatPercentage}% body Fat percentage I aim to have ${fitnessGoals} create a workout routine/plan for me. Reply very concisely with only the workout plan and absolutely nothing else. The plan should be in clear and in detail. No extra information or text just the workout plan since I want to copy and paste it.`,
                         "workout"
@@ -412,33 +418,27 @@ const Homepage = () => {
                   <div className={styles.chat}>
                     Here is a your personalised workout plan
                   </div>
-                  <div
-                    className={styles.chat}
-                    dangerouslySetInnerHTML={{
-                      __html: parseMarkdownToHtml(aiWoResp),
-                    }}
-                  />
+                  {/* 6. Used ReactMarkdown for safe rendering */}
+                  <div className={styles.chat}>
+                    <ReactMarkdown>{aiWoResp}</ReactMarkdown>
+                  </div>
                   <div className={styles.chat}>
                     Would you like a specific diet plan as well?
                   </div>
+                  {/* 7. Used onValueChange for ToggleGroup */}
                   <ToggleGroup
                     disabled={chatTracker.dietEntered}
                     type="single"
                     variant="outline"
                     className={styles.ToggleGroup}
+                    onValueChange={(value: "Yes" | "No") => {
+                      if (value) setDispdiet(value);
+                    }}
                   >
-                    <ToggleGroupItem
-                      value="Yes"
-                      className={styles.toggleBtn}
-                      onClick={() => setDispdiet("Yes")}
-                    >
+                    <ToggleGroupItem value="Yes" className={styles.toggleBtn}>
                       Yes
                     </ToggleGroupItem>
-                    <ToggleGroupItem
-                      value="No"
-                      className={styles.toggleBtn}
-                      onClick={() => setDispdiet("No")}
-                    >
+                    <ToggleGroupItem value="No" className={styles.toggleBtn}>
                       No
                     </ToggleGroupItem>
                   </ToggleGroup>
@@ -454,30 +454,33 @@ const Homepage = () => {
                 <div className={styles.chat}>
                   Okay! What are your dietary prefrences.
                 </div>
+                {/* 7. Used onValueChange for ToggleGroup */}
                 <ToggleGroup
                   disabled={chatTracker.dietEntered}
                   type="single"
                   variant="outline"
                   className={styles.ToggleGroup}
+                  onValueChange={(
+                    value: "Non-Vegeterian" | "Vegeterian" | "Eggeterian"
+                  ) => {
+                    if (value) setdiet(value);
+                  }}
                 >
                   <ToggleGroupItem
                     value="Non-Vegeterian"
                     className={styles.toggleBtn}
-                    onClick={() => setdiet("Non-Vegeterian")}
                   >
                     Non-Vegeterian
                   </ToggleGroupItem>
                   <ToggleGroupItem
                     value="Vegeterian"
                     className={styles.toggleBtn}
-                    onClick={() => setdiet("Vegeterian")}
                   >
                     Vegeterian
                   </ToggleGroupItem>
                   <ToggleGroupItem
                     value="Eggeterian"
                     className={styles.toggleBtn}
-                    onClick={() => setdiet("Eggeterian")}
                   >
                     Eggeterian
                   </ToggleGroupItem>
@@ -488,8 +491,6 @@ const Homepage = () => {
                   name="dietEntered"
                   onClick={(e) => {
                     chatHandler(e);
-                    // const newPrompt = `Hi I am a ${details.age} year old ${gender} with ${details.weight} kg weight and ${details.height} inches height and ${bodyFatPercentage}% body Fat percentage I aim to have ${fitnessGoals} create a weekly diet plan for me I am a ${diet}. Reply very concisely with only the diet plan and absolutely nothing else. The plan should be in clear and in detail. No extra sentences or information just the diet plan`;
-                    // setPrompt(prompt);
                     promptSend(
                       `Hi I am a ${details.age} year old ${gender} with ${details.weight} kg weight and ${details.height} inches height and ${bodyFatPercentage}% body Fat percentage I aim to have ${fitnessGoals} create a weekly diet plan for me I am a ${diet}. Reply very concisely with only the diet plan and absolutely nothing else. The plan should be in clear and in detail. No extra sentences or information just the diet plan`,
                       "diet"
@@ -507,7 +508,11 @@ const Homepage = () => {
                 <div className={styles.chat}>
                   You can download the Workout and diet plan from the PDF
                 </div>
-                <Button variant="outline" onClick={generateWoPdf}>
+                {/* 5. Using new reusable PDF function */}
+                <Button
+                  variant="outline"
+                  onClick={() => generatePdf(aiWoResp, "WorkoutPlan.pdf")}
+                >
                   <InstallIcon /> Workout_Plan.pdf
                 </Button>
               </div>
@@ -516,12 +521,10 @@ const Homepage = () => {
               (typeof aiDietResp === "string" ? (
                 <div className="w-full">
                   <div className="flex flex-col justify-end items-end">
-                    <div
-                      className={styles.chat}
-                      dangerouslySetInnerHTML={{
-                        __html: parseMarkdownToHtml(aiDietResp),
-                      }}
-                    />
+                    {/* 6. Used ReactMarkdown for safe rendering */}
+                    <div className={styles.chat}>
+                      <ReactMarkdown>{aiDietResp}</ReactMarkdown>
+                    </div>
                     <div className={styles.chat}>
                       You are all done! All the best in your Fitness Journey!
                     </div>
@@ -529,19 +532,28 @@ const Homepage = () => {
                       You can download the Workout and diet plan from the PDF
                     </div>
                     <div className="flex gap-2 mb-20">
-                      <Button variant="outline" onClick={generateDietPdf}>
+                      {/* 5. Using new reusable PDF function */}
+                      <Button
+                        variant="outline"
+                        onClick={() =>
+                          generatePdf(aiDietResp, "DietPlan.pdf")
+                        }
+                      >
                         <InstallIcon /> Diet_Plan.pdf
                       </Button>
-                      <Button variant="outline" onClick={generateWoPdf}>
+                      <Button
+                        variant="outline"
+                        onClick={() =>
+                          generatePdf(aiWoResp, "WorkoutPlan.pdf")
+                        }
+                      >
                         <InstallIcon /> Workout_Plan.pdf
                       </Button>
                     </div>
                   </div>
                 </div>
               ) : (
-                <div>
-                  {aiDietResp}
-                </div>
+                <div>{aiDietResp}</div>
               ))}
           </div>
         )}
