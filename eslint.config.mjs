@@ -9,10 +9,18 @@ const compat = new FlatCompat({
   baseDirectory: __dirname,
 });
 
+// 1. Define your config
+const myConfig = {
+  rules: {
+    // 2. Add this line to turn off the apostrophe rule
+    "react/no-unescaped-entities": "off",
+  },
+};
+
 const eslintConfig = [
-  // This is the only one you need.
-  // It automatically includes all the rules for Next.js, React, and TypeScript.
   ...compat.extends("next/core-web-vitals"),
+  // 3. Add your new config to the array
+  myConfig,
 ];
 
 export default eslintConfig;
