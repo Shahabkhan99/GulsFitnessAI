@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import  './globals.css'
-import Head from "next/head";
+// 1. REMOVE THIS IMPORT:
+// import Head from "next/head"; 
 import { Analytics } from '@vercel/analytics/next';
 
 const geistSans = Geist({
@@ -17,6 +18,8 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Fit Ai",
   description: "Creates a workout and diet plan tailored to the user's needs.",
+  // 2. ADD VIEWPORT HERE INSTEAD OF <Head>:
+  viewport: "width=device-width, initial-scale=1",
 };
 
 export default function RootLayout({
@@ -26,9 +29,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-    <Head>
-      <meta name="viewport" content="width=device-width, initial-scale=1"/>
-    </Head>
+      {/* 3. REMOVE THE <Head> ... </Head> TAGS FROM HERE */}
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
