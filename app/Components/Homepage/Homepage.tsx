@@ -477,9 +477,9 @@ const promptSend = async (promptText: string, type: "workout" | "diet") => {
                   className={styles.ToggleGroup}
                 >
                   <ToggleGroupItem
-                    value="Halal Non-Vegetarian do not include any pork, pig, bacon, ham, or any dishes containing alcohol"
+                    value="Non-Vegetarian"
                     className={styles.toggleBtn}
-                    onClick={() => setdiet("Halal Non-Vegetarian do not include any pork, pig, bacon, ham, or any dishes containing alcohol")}
+                    onClick={() => setdiet("Non-Vegetarian")}
                   >
                     Non-Vegeterian
                   </ToggleGroupItem>
@@ -507,7 +507,7 @@ const promptSend = async (promptText: string, type: "workout" | "diet") => {
                     // const newPrompt = `Hi I am a ${details.age} year old ${gender} with ${details.weight} kg weight and ${details.height} inches height and ${bodyFatPercentage}% body Fat percentage I aim to have ${fitnessGoals} create a weekly diet plan for me I am a ${diet}. Reply very concisely with only the diet plan and absolutely nothing else. The plan should be in clear and in detail. No extra sentences or information just the diet plan`;
                     // setPrompt(prompt);
                     promptSend(
-                      `Hi I am a ${details.age} year old ${gender} with ${details.weight} kg weight and ${details.height} inches height and ${bodyFatPercentage}% body Fat percentage I aim to have ${fitnessGoals} create a weekly diet plan for me I am a ${diet}. Reply very concisely with only the diet plan and absolutely nothing else. The plan should be in clear and in detail. No extra sentences or information just the diet plan`,
+                      `Hi I am a ${details.age} year old ${gender} with ${details.weight} kg weight and ${details.height} inches height and ${bodyFatPercentage}% body Fat percentage I aim to have ${fitnessGoals} create a weekly diet plan for me I am a ${diet} and do not include any pork, pig, bacon, ham, or any dishes containing alcohol halal food only". Reply very concisely with only the diet plan and absolutely nothing else. The plan should be in clear and in detail. No extra sentences or information just the diet plan`,
                       "diet"
                     );
                   }}
