@@ -82,7 +82,7 @@ const Homepage = () => {
   // const [prompt, setPrompt] = useState("");
   const [dispDiet, setDispdiet] = useState<"Yes" | "No">();
   const [diet, setdiet] = useState<
-    "Non-Vegeterian" | "Vegeterian" | "Eggeterian"
+    "Halal Non-Vegetarian do not include any pork, pig, bacon, ham, or any dishes containing alcohol" | "Vegeterian" | "Eggeterian"
   >();
 
   const changeHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
