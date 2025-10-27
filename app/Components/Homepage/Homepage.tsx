@@ -1,8 +1,3 @@
-Your code had several stray characters and words (`Click`, `s`, `V`, `Note`, `Type`, `Section`) left over in your JSX, which were causing syntax errors. These will prevent the component from compiling.
-
-I've removed them in the corrected code below. I've marked the lines where the changes were made with `// <-- FIX: ...` comments.
-
-````jsx
 "use client";
 import React, { useState } from "react";
 import styles from "@/app/Components/Homepage/Homepage.module.css";
@@ -35,29 +30,59 @@ const Homepage = () => {
     AimEntered: false,
     dietEntered: false,
   });
+  // const [aiResp, setAiResp] = useState<React.JSX.Element | string>(
 
+  //   <div className="flex flex-col space-y-2">
+  //     <Skeleton className="h-4 w-[500px]" />
+  //     <Skeleton className="h-4 w-[450px]" />
+  //     <Skeleton className="h-4 w-[500px]" />
+  //     <Skeleton className="h-4 w-[450px]" />
+  //   </div>,
+
+  // );
+  // const [aiResp, setAiResp] = useState<React.JSX.Element | string>({
+
+  //   workoutPlan:<div className="flex flex-col space-y-2">
+  //     <Skeleton className="h-4 w-[500px]" />
+  //     <Skeleton className="h-4 w-[450px]" />
+  //     <Skeleton className="h-4 w-[500px]" />
+  //     <Skeleton className="h-4 w-[450px]" />
+  //   </div>,
+  //   dietPlan:<div className="flex flex-col space-y-2">
+  //   <Skeleton className="h-4 w-[500px]" />
+  //   <Skeleton className="h-4 w-[450px]" />
+  //   <Skeleton className="h-4 w-[500px]" />
+  //   <Skeleton className="h-4 w-[450px]" />
+  // </div>,
+  // }
+
+  // );
   const [aiWoResp, setAiWoResp] = useState<React.JSX.Element | string>(() => (
-    <div className={styles.skeletonChat}>
+     <div className={styles.skeletonChat}>
+      
       <Skeleton className={styles.skeleton1} />
       <Skeleton className={styles.skeleton2} />
       <Skeleton className={styles.skeleton1} />
       <Skeleton className={styles.skeleton2} />
-    </div>
+    
+  </div>
   ));
   const [aiDietResp, setAiDietResp] = useState<React.JSX.Element | string>(
     () => (
       <div className={styles.skeletonChat}>
+      
         <Skeleton className={styles.skeleton1} />
         <Skeleton className={styles.skeleton2} />
         <Skeleton className={styles.skeleton1} />
         <Skeleton className={styles.skeleton2} />
-      </div>
-    )
-  );
+      
+    </div>
+  ));
+  // const [prompt, setPrompt] = useState("");
   const [dispDiet, setDispdiet] = useState<"Yes" | "No">();
   const [diet, setdiet] = useState<
-    "Halal Non-Vegetarian" | "Vegeterian" | "Eggeterian"
-  >(); // Updated this state to include the new value
+    "Non-Vegeterian" | "Vegeterian" | "Eggeterian"
+  >();
 
   const changeHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
     setDetails({ ...details, [e.target.name]: e.target.value });
@@ -86,7 +111,7 @@ const Homepage = () => {
     );
   };
 
-  const promptSend = async (promptText: string, type: "workout" | "diet") => {
+const promptSend = async (promptText: string, type: "workout" | "diet") => {
     const response = await fetch("/api/gemini", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -95,12 +120,12 @@ const Homepage = () => {
 
     const data = await response.json();
 
+    // --- THIS IS THE FIX ---
     // Check if the server sent an error back
     if (data.error) {
       console.error("Error from API:", data.details);
-      const errorMsg =
-        "Sorry, I ran into an error. Please make sure your API key is set up correctly and try again.";
-
+      const errorMsg = "Sorry, I ran into an error. Please make sure your GOOGLE_API_KEY is set up correctly and try again.";
+      
       if (type === "workout") {
         setAiWoResp(errorMsg);
       } else if (type === "diet") {
@@ -108,6 +133,7 @@ const Homepage = () => {
       }
       return data;
     }
+    // --- END OF FIX ---
 
     // This part will only run if there was NO error
     if (type === "workout") {
@@ -124,9 +150,7 @@ const Homepage = () => {
     text = text.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
 
     // Convert * bullet points into <ul><li></li></ul>
-    // Improved regex to handle multiple bullet points
-    text = text.replace(/\n\* (.*?)(?=\n\* |\n\n|$)/g, "<ul><li>$1</li></ul>");
-    text = text.replace(/<\/ul><ul>/g, ""); // Combine adjacent lists
+    text = text.replace(/\n\* (.*?)\n/g, "<ul><li>$1</li></ul>");
 
     // Convert line breaks into <br>
     text = text.replace(/\n/g, "<br>");
@@ -196,8 +220,7 @@ const Homepage = () => {
     <div className="p-10 sm:text-sm sm:p-6">
       <div className="flex flex-col justify-center items-center w-full">
         <h1 className="text-5xl my-7 text-center">
-          Welcome to Gul's{" "}
-          <span className="bg-muted rounded-xl px-2">Fitness Club</span>!
+          Welcome to Gul's <span className="bg-muted rounded-xl px-2">Fitness Club</span>!
         </h1>
         <div>One Place For All Your Fitness Needs.</div>
       </div>
@@ -227,8 +250,7 @@ const Homepage = () => {
         {chatTracker.nameEntered && (
           <div className="flex flex-col justify-end items-end">
             <div className={styles.chat}>
-              Merhaba {details.name}, Let&apos;s get you in the best shape of
-              your life!
+                 Merhaba {details.name}, Let&apos;s get you in the best shape of your life!
             </div>
             <div className="flex flex-col justify-end items-end">
               <div className={styles.chat}>Tell me about yourself</div>
@@ -385,12 +407,13 @@ const Homepage = () => {
                     name="AimEntered"
                     onClick={(e) => {
                       chatHandler(e);
+                      // const newPrompt = `Hi I am a ${details.age} year old ${gender} with ${details.weight} kg weight and ${details.height} inches height and ${bodyFatPercentage}% body Fat percentage I aim to have ${fitnessGoals} create a workout routine/plan for me. Reply very concisely with only the workout plan and absolutely nothing else. The plan should be in clear and in detail. No extra information or text just the workout plan since I want to copy and paste it.`;
+                      // setPrompt(prompt);
                       promptSend(
                         `Hi I am a ${details.age} year old ${gender} with ${details.weight} kg weight and ${details.height} inches height and ${bodyFatPercentage}% body Fat percentage I aim to have ${fitnessGoals} create a workout routine/plan for me. Reply very concisely with only the workout plan and absolutely nothing else. The plan should be in clear and in detail. No extra information or text just the workout plan since I want to copy and paste it.`,
                         "workout"
                       );
                     }}
-                    // <-- FIX: Removed stray word "Click" from before the >
                   >
                     Submit
                   </Button>
@@ -453,9 +476,9 @@ const Homepage = () => {
                   className={styles.ToggleGroup}
                 >
                   <ToggleGroupItem
-                    value="Halal Non-Vegetarian"
+                    value="Halal Non-Vegetarian do not include any pork, pig, bacon, ham, or any dishes containing alcohol"
                     className={styles.toggleBtn}
-                    onClick={() => setdiet("Halal Non-Vegetarian")}
+                    onClick={() => setdiet("Halal Non-Vegetarian do not include any pork, pig, bacon, ham, or any dishes containing alcohol")}
                   >
                     Non-Vegeterian
                   </ToggleGroupItem>
@@ -480,28 +503,12 @@ const Homepage = () => {
                   name="dietEntered"
                   onClick={(e) => {
                     chatHandler(e);
-
-                    // --- START OF UPDATED LOGIC ---
-                    let dietPrompt = ""; // Create a variable for the prompt
-
-                    // The 'diet' state is already set by the toggle buttons
-                    // e.g., "Halal Non-Vegetarian", "Vegeterian"
-
-                    if (diet === "Halal Non-Vegetarian") {
-                      dietPrompt = `Hi I am a ${details.age} year old ${gender} with ${details.weight} kg weight and ${details.height} inches height and ${bodyFatPercentage}% body Fat percentage I aim to have ${fitnessGoals}
-Create a weekly **strictly halal** non-vegetarian diet plan for me. 
-This plan **MUST NOT** include any pork, pig products, bacon, ham, or any dishes containing alcohol ${diet}.
-Reply very concisely with only the diet plan and absolutely nothing else. The plan should be in clear and in detail. No extra sentences or information just the diet plan.`;
-                    } else {
-                      // This will cover "Vegeterian" and "Eggeterian"
-                      dietPrompt = `Hi I am a ${details.age} year old ${gender} with ${details.weight} kg weight and ${details.height} inches height and ${bodyFatPercentage}% body Fat percentage I aim to have ${fitnessGoals} create a weekly diet plan for me I am a ${diet}. 
-Reply very concisely with only the diet plan and absolutely nothing else. The plan should be in clear and in detail. No extra sentences or information just the diet plan.`;
-                    }
-                    // --- END OF UPDATED LOGIC ---
-
-                    // Call promptSend with the new 'dietPrompt' variable
-                    promptSend(dietPrompt, "diet");
-                    // <-- FIX: Removed stray "s" from this line
+                    // const newPrompt = `Hi I am a ${details.age} year old ${gender} with ${details.weight} kg weight and ${details.height} inches height and ${bodyFatPercentage}% body Fat percentage I aim to have ${fitnessGoals} create a weekly diet plan for me I am a ${diet}. Reply very concisely with only the diet plan and absolutely nothing else. The plan should be in clear and in detail. No extra sentences or information just the diet plan`;
+                    // setPrompt(prompt);
+                    promptSend(
+                      `Hi I am a ${details.age} year old ${gender} with ${details.weight} kg weight and ${details.height} inches height and ${bodyFatPercentage}% body Fat percentage I aim to have ${fitnessGoals} create a weekly diet plan for me I am a ${diet}. Reply very concisely with only the diet plan and absolutely nothing else. The plan should be in clear and in detail. No extra sentences or information just the diet plan`,
+                      "diet"
+                    );
                   }}
                 >
                   Submit
@@ -509,7 +516,6 @@ Reply very concisely with only the diet plan and absolutely nothing else. The pl
               </div>
             ) : dispDiet === "No" ? (
               <div className="flex flex-col justify-end items-end">
-                {/* <-- FIX: Removed stray "V" from this line */}
                 <div className={styles.chat}>
                   You are all done! All the best in your Fitness Journey!
                 </div>
@@ -538,31 +544,27 @@ Reply very concisely with only the diet plan and absolutely nothing else. The pl
                       You can download the Workout and diet plan from the PDF
                     </div>
                     <div className="flex gap-2 mb-20">
-                      {/* <-- FIX: Removed stray "Click" from this line */}
                       <Button variant="outline" onClick={generateDietPdf}>
                         <InstallIcon /> Diet_Plan.pdf
-                        {/* <-- FIX: Removed stray "s" from this line */}
                       </Button>
-                      {/* <-- FIX: Removed stray "s" from this line */}
                       <Button variant="outline" onClick={generateWoPdf}>
                         <InstallIcon /> Workout_Plan.pdf
                       </Button>
                     </div>
                   </div>
-                  {/* <-- FIX: Removed stray "Note" from this line */}
                 </div>
               ) : (
-                <div>{aiDietResp}</div>
+                <div>
+                  {aiDietResp}
+                </div>
               ))}
           </div>
         )}
       </div>
       {typeof aiDietResp === "string" && (
         <div className="flex flex-col justify-center items-center w-full">
-          {/* <-- FIX: Removed stray "Type" from this line */}
           <div className="text-5xl my-7">Thank You!</div>
           <div>Created By Gul's Fantasy.</div>
-          {/* <-- FIX: Removed stray "Section" from this line */}
         </div>
       )}
     </div>
@@ -570,3 +572,4 @@ Reply very concisely with only the diet plan and absolutely nothing else. The pl
 };
 
 export default Homepage;
+
