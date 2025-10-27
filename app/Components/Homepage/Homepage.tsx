@@ -425,7 +425,7 @@ const promptSend = async (promptText: string, type: "workout" | "diet") => {
               (typeof aiWoResp === "string" ? (
                 <div className="flex flex-col justify-end items-end">
                   <div className={styles.chat}>
-                    Here is a your personalised workout plan
+                    Here is your personalised workout plan
                   </div>
                   <div
                     className={styles.chat}
@@ -467,7 +467,7 @@ const promptSend = async (promptText: string, type: "workout" | "diet") => {
             {dispDiet === "Yes" ? (
               <div className="flex flex-col justify-end items-end">
                 <div className={styles.chat}>
-                  Okay! What are your dietary prefrences.
+                  Okay! What are your dietary preferences?
                 </div>
                 <ToggleGroup
                   disabled={chatTracker.dietEntered}
@@ -476,9 +476,9 @@ const promptSend = async (promptText: string, type: "workout" | "diet") => {
                   className={styles.ToggleGroup}
                 >
                   <ToggleGroupItem
-                    value="Non-Vegeterian"
+                    value="Halal Non-Vegetarian"
                     className={styles.toggleBtn}
-                    onClick={() => setdiet("Non-Vegeterian")}
+                    onClick={() => setdiet("Halal Non-Vegetarian")}
                   >
                     Non-Vegeterian
                   </ToggleGroupItem>
