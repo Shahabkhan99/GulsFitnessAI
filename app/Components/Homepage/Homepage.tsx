@@ -31,55 +31,30 @@ const Homepage = () => {
     AimEntered: false,
     dietEntered: false,
   });
-  // const [aiResp, setAiResp] = useState<React.JSX.Element | string>(
 
-  //   <div className="flex flex-col space-y-2">
-  //     <Skeleton className="h-4 w-[500px]" />
-  //     <Skeleton className="h-4 w-[450px]" />
-  //     <Skeleton className="h-4 w-[500px]" />
-  //     <Skeleton className="h-4 w-[450px]" />
-  //   </div>,
+  // --- NEW STATE FOR LOADING ---
+  // We add this to show a loading message on the buttons
+  const [isLoading, setIsLoading] = useState(false);
 
-  // );
-  // const [aiResp, setAiResp] = useState<React.JSX.Element | string>({
-
-  //   workoutPlan:<div className="flex flex-col space-y-2">
-  //     <Skeleton className="h-4 w-[500px]" />
-  //     <Skeleton className="h-4 w-[450px]" />
-  //     <Skeleton className="h-4 w-[500px]" />
-  //     <Skeleton className="h-4 w-[450px]" />
-  //   </div>,
-  //   dietPlan:<div className="flex flex-col space-y-2">
-  //   <Skeleton className="h-4 w-[500px]" />
-  //   <Skeleton className="h-4 w-[450px]" />
-  //   <Skeleton className="h-4 w-[500px]" />
-  //   <Skeleton className="h-4 w-[450px]" />
-  // </div>,
-  // }
-
-  // );
   const [aiWoResp, setAiWoResp] = useState<React.JSX.Element | string>(() => (
-     <div className={styles.skeletonChat}>
-      
+    <div className={styles.skeletonChat}>
       <Skeleton className={styles.skeleton1} />
       <Skeleton className={styles.skeleton2} />
       <Skeleton className={styles.skeleton1} />
       <Skeleton className={styles.skeleton2} />
-    
-  </div>
+    </div>
   ));
   const [aiDietResp, setAiDietResp] = useState<React.JSX.Element | string>(
     () => (
       <div className={styles.skeletonChat}>
-      
         <Skeleton className={styles.skeleton1} />
         <Skeleton className={styles.skeleton2} />
         <Skeleton className={styles.skeleton1} />
         <Skeleton className={styles.skeleton2} />
-      
-    </div>
-  ));
-  // const [prompt, setPrompt] = useState("");
+      </div>
+    )
+  );
+
   const [dispDiet, setDispdiet] = useState<"Yes" | "No">();
   const [diet, setdiet] = useState<
     "Halal Non-Vegetarian do not include any pork, pig, bacon, ham, or any dishes containing alcohol" | "Vegeterian" | "Eggeterian"
@@ -112,38 +87,82 @@ const Homepage = () => {
     );
   };
 
-const promptSend = async (promptText: string, type: "workout" | "diet") => {
-    const response = await fetch("/api/gemini", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt: promptText }),
-    });
-
-    const data = await response.json();
-
-    // --- THIS IS THE FIX ---
-    // Check if the server sent an error back
-    if (data.error) {
-      console.error("Error from API:", data.details);
-      const errorMsg = "Sorry, I ran into an error. Please make sure your GOOGLE_API_KEY is set up correctly and try again.";
-      
-      if (type === "workout") {
-        setAiWoResp(errorMsg);
-      } else if (type === "diet") {
-        setAiDietResp(errorMsg);
-      }
-      return data;
-    }
-    // --- END OF FIX ---
-
-    // This part will only run if there was NO error
+  // -----------------------------------------------------------------
+  // --- THIS IS THE UPDATED API FUNCTION ---
+  // -----------------------------------------------------------------
+  const promptSend = async (promptText: string, type: "workout" | "diet") => {
+    setIsLoading(true);
+    // Clear the previous response and show skeletons
     if (type === "workout") {
-      setAiWoResp(data.text);
-    } else if (type === "diet") {
-      setAiDietResp(data.text);
+      setAiWoResp(
+        <div className={styles.skeletonChat}>
+          <Skeleton className={styles.skeleton1} />
+          <Skeleton className={styles.skeleton2} />
+        </div>
+      );
+    } else {
+      setAiDietResp(
+        <div className={styles.skeletonChat}>
+          <Skeleton className={styles.skeleton1} />
+          <Skeleton className={styles.skeleton2} />
+        </div>
+      );
     }
-    return data;
+
+    try {
+      // This now calls YOUR OWN Next.js API route, not Google
+      const response = await fetch("/api/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: promptText }),
+      });
+
+      // --- NEW HUGGING FACE ERROR HANDLING ---
+      if (!response.ok) {
+        let errorMsg = "Sorry, I ran into an error. Please try again.";
+        
+        // The model is likely loading (a 503 Service Unavailable error)
+        if (response.status === 503) {
+          console.error("Model is loading. Please wait.");
+          errorMsg = "The AI is warming up. Please wait 20 seconds and try again.";
+        }
+        // You hit the free rate limit (a 429 Too Many Requests error)
+        else if (response.status === 429) {
+          console.error("Rate limit hit.");
+          errorMsg = "Sorry, I'm a bit overwhelmed right now. Please try again in a minute.";
+        } else {
+          // General error
+          const errData = await response.text();
+          console.error("Error from API:", errData);
+        }
+
+        if (type === "workout") setAiWoResp(errorMsg);
+        else setAiDietResp(errorMsg);
+        
+        setIsLoading(false);
+        return; // Stop the function here
+      }
+
+      const data = await response.json();
+
+      // Success! Get the generated text.
+      const aiText = data.generated_text;
+
+      if (type === "workout") {
+        setAiWoResp(aiText);
+      } else if (type === "diet") {
+        setAiDietResp(aiText);
+      }
+    } catch (error) {
+      console.error("Failed to fetch from API route:", error);
+      const errorMsg = "Sorry, I ran into an error. Please try again.";
+      if (type === "workout") setAiWoResp(errorMsg);
+      else setAiDietResp(errorMsg);
+    } finally {
+      setIsLoading(false);
+    }
   };
+  // --- END OF UPDATED API FUNCTION ---
 
   function parseMarkdownToHtml(text: string): string {
     // Convert **bold** text to <strong>bold</strong>
@@ -251,7 +270,7 @@ const promptSend = async (promptText: string, type: "workout" | "diet") => {
         {chatTracker.nameEntered && (
           <div className="flex flex-col justify-end items-end">
             <div className={styles.chat}>
-                 Merhaba {details.name}, Let&apos;s get you in the best shape of your life!
+              Merhaba {details.name}, Let&apos;s get you in the best shape of your life!
             </div>
             <div className="flex flex-col justify-end items-end">
               <div className={styles.chat}>Tell me about yourself</div>
@@ -406,17 +425,16 @@ const promptSend = async (promptText: string, type: "workout" | "diet") => {
                     variant="secondary"
                     className={styles.submitbtn}
                     name="AimEntered"
+                    disabled={isLoading} // Disable button when loading
                     onClick={(e) => {
                       chatHandler(e);
-                      // const newPrompt = `Hi I am a ${details.age} year old ${gender} with ${details.weight} kg weight and ${details.height} inches height and ${bodyFatPercentage}% body Fat percentage I aim to have ${fitnessGoals} create a workout routine/plan for me. Reply very concisely with only the workout plan and absolutely nothing else. The plan should be in clear and in detail. No extra information or text just the workout plan since I want to copy and paste it.`;
-                      // setPrompt(prompt);
                       promptSend(
                         `Hi I am a ${details.age} year old ${gender} with ${details.weight} kg weight and ${details.height} inches height and ${bodyFatPercentage}% body Fat percentage I aim to have ${fitnessGoals} create a workout routine/plan for me. Reply very concisely with only the workout plan and absolutely nothing else. The plan should be in clear and in detail. No extra information or text just the workout plan since I want to copy and paste it.`,
                         "workout"
                       );
                     }}
                   >
-                    Submit
+                    {isLoading ? "Generating..." : "Submit"}
                   </Button>
                 </div>
               </div>
@@ -460,7 +478,7 @@ const promptSend = async (promptText: string, type: "workout" | "diet") => {
                   </ToggleGroup>
                 </div>
               ) : (
-                <div>{aiWoResp}</div>
+                <div>{aiWoResp}</div> // This will show the skeleton
               ))}
             {chatTracker.AimEntered && (
               <div className="flex flex-col justify-end items-end"></div>
@@ -502,17 +520,16 @@ const promptSend = async (promptText: string, type: "workout" | "diet") => {
                   variant="secondary"
                   className={styles.submitbtn}
                   name="dietEntered"
+                  disabled={isLoading} // Disable button when loading
                   onClick={(e) => {
                     chatHandler(e);
-                    // const newPrompt = `Hi I am a ${details.age} year old ${gender} with ${details.weight} kg weight and ${details.height} inches height and ${bodyFatPercentage}% body Fat percentage I aim to have ${fitnessGoals} create a weekly diet plan for me I am a ${diet}. Reply very concisely with only the diet plan and absolutely nothing else. The plan should be in clear and in detail. No extra sentences or information just the diet plan`;
-                    // setPrompt(prompt);
                     promptSend(
                       `Hi I am a ${details.age} year old ${gender} with ${details.weight} kg weight and ${details.height} inches height and ${bodyFatPercentage}% body Fat percentage I aim to have ${fitnessGoals} create a weekly diet plan for me I am a ${diet} and do not include any pork, pig, bacon, ham, or any dishes containing alcohol halal food only". Reply very concisely with only the diet plan and absolutely nothing else. The plan should be in clear and in detail. No extra sentences or information just the diet plan`,
                       "diet"
                     );
                   }}
                 >
-                  Submit
+                  {isLoading ? "Generating..." : "Submit"}
                 </Button>
               </div>
             ) : dispDiet === "No" ? (
@@ -556,7 +573,7 @@ const promptSend = async (promptText: string, type: "workout" | "diet") => {
                 </div>
               ) : (
                 <div>
-                  {aiDietResp}
+                  {aiDietResp} {/* This will show the skeleton */}
                 </div>
               ))}
           </div>
@@ -573,4 +590,3 @@ const promptSend = async (promptText: string, type: "workout" | "diet") => {
 };
 
 export default Homepage;
-
