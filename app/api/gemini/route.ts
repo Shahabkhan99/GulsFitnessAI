@@ -1,48 +1,21 @@
-// app/api/generate-text/route.ts
 import { generateText } from "ai";
-import { groq } from "@ai-sdk/groq";          // <-- Groq provider
-import { NextRequest, NextResponse } from "next/server";
+import { google } from "@ai-sdk/google";
+import { NextResponse } from "next/server";
 
-/**
- * POST /api/generate-text
- *
- * Expects a JSON body:
- *   { "prompt": "some text" }
- *
- * Returns:
- *   { "text": "generated text" }
- *
- * On error it returns a 500 with an error message.
- */
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
   try {
-    const body = await req.json();
-
-    if (!body || typeof body.prompt !== "string") {
-      return NextResponse.json(
-        { error: "Missing or invalid 'prompt' in request body" },
-        { status: 400 }
-      );
-    }
-
+    const { prompt } = await req.json();
     const { text } = await generateText({
-      model: groq("gemma-7b-it"),     // <-- change model name here
-      prompt: body.prompt,
-      // optional: tweak generation parameters
-      // temperature: 0.7,
-      // max_output_tokens: 500,
+      model: google("models/gemini-2.0-flash-exp"),
+      prompt,
     });
 
     return NextResponse.json({ text });
   } catch (error: any) {
-    console.error("Text generation error:", error);
-
-    // Return a friendly error to the client
+    console.error(error);
+    // ADD THIS BLOCK TO SEND THE ERROR BACK TO THE FRONTEND
     return NextResponse.json(
-      {
-        error: "Failed to generate text",
-        details: error.message || error.toString(),
-      },
+      { error: "Failed to generate text", details: error.message },
       { status: 500 }
     );
   }
