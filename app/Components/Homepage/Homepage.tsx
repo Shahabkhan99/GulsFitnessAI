@@ -476,13 +476,18 @@ const promptSend = async (promptText: string, type: "workout" | "diet") => {
                   variant="outline"
                   className={styles.ToggleGroup}
                 >
-                  <ToggleGroupItem
-                    value="Non-Vegetarian"
-                    className={styles.toggleBtn}
-                    onClick={() => setdiet("Non-Vegetarian")}
-                  >
-                    Non-Vegeterian
-                  </ToggleGroupItem>
+<ToggleGroupItem
+  value="Halal Non-Vegetarian do not include any pork, pig, bacon, ham, or any dishes containing alcohol"
+  className={styles.toggleBtn}
+  onClick={() =>
+    setdiet(
+      "Halal Non-Vegetarian do not include any pork, pig, bacon, ham, or any dishes containing alcohol"
+    )
+  }
+>
+  Non-Vegeterian
+</ToggleGroupItem>
+                  
                   <ToggleGroupItem
                     value="Vegeterian"
                     className={styles.toggleBtn}
