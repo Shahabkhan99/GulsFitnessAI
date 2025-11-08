@@ -33,7 +33,6 @@ const Homepage = () => {
   });
 
   // --- NEW STATE FOR LOADING ---
-  // We add this to show a loading message on the buttons
   const [isLoading, setIsLoading] = useState(false);
 
   const [aiWoResp, setAiWoResp] = useState<React.JSX.Element | string>(() => (
@@ -57,7 +56,7 @@ const Homepage = () => {
 
   const [dispDiet, setDispdiet] = useState<"Yes" | "No">();
   const [diet, setdiet] = useState<
-    "Halal Non-Vegetarian do not include any pork, pig, bacon, ham, or any dishes containing alcohol" | "Vegeterian" | "Eggeterian"
+    "Halal Non-Vegetarian do not include any pork, pig, bacon, ham, or any dishes containing alcohol" | "Vegeterian" | "Eggeterian" | undefined
   >();
 
   const changeHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -88,7 +87,7 @@ const Homepage = () => {
   };
 
   // -----------------------------------------------------------------
-  // --- THIS IS THE UPDATED API FUNCTION ---
+  // --- THIS IS THE UPDATED API FUNCTION (FOR HUGGING FACE) ---
   // -----------------------------------------------------------------
   const promptSend = async (promptText: string, type: "workout" | "diet") => {
     setIsLoading(true);
@@ -110,7 +109,7 @@ const Homepage = () => {
     }
 
     try {
-      // This now calls YOUR OWN Next.js API route, not Google
+      // This now calls YOUR OWN Next.js API route
       const response = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -497,6 +496,7 @@ const Homepage = () => {
                   <ToggleGroupItem
                     value="Non-Vegetarian"
                     className={styles.toggleBtn}
+                    // --- THIS IS THE FIX ---
                     onClick={() => setdiet("Halal Non-Vegetarian do not include any pork, pig, bacon, ham, or any dishes containing alcohol")}
                   >
                     Non-Vegeterian
