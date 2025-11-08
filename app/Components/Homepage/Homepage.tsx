@@ -116,7 +116,7 @@ const Homepage = () => {
         body: JSON.stringify({ prompt: promptText }),
       });
 
-      // --- NEW HUGGING FACE ERROR HANDLING ---
+      // --- NEW HUGGING FACE ERROR HANDLING (IMPROVED) ---
       if (!response.ok) {
         let errorMsg = "Sorry, I ran into an error. Please try again.";
         
@@ -130,9 +130,21 @@ const Homepage = () => {
           console.error("Rate limit hit.");
           errorMsg = "Sorry, I'm a bit overwhelmed right now. Please try again in a minute.";
         } else {
-          // General error
-          const errData = await response.text();
-          console.error("Error from API:", errData);
+          // --- THIS IS THE NEW PART ---
+          // General error from our OWN API route (like 500 or 400)
+          try {
+            // Try to parse the error message from our /api/generate route
+            const errData = await response.json(); 
+            console.error("Error from API route:", errData);
+            // Use the specific error message from the server
+            errorMsg = errData.error || errorMsg; 
+          } catch (e) {
+            // The error response wasn't JSON, just plain text
+            const errText = await response.text();
+            console.error("Error from API (not JSON):", errText);
+            // We can't show the text, it might be HTML. Stick to the generic message.
+          }
+          // --- END OF NEW PART ---
         }
 
         if (type === "workout") setAiWoResp(errorMsg);
