@@ -9,10 +9,10 @@ export async function POST(req: Request) {
     // --- Try Google Gemini first ---
     if (process.env.GOOGLE_API_KEY) {
       try {
-        const { text } = await generateText({
-          model: google("models/gemini-2.0-flash-exp"),
-          prompt,
-        });
+const { text } = await generateText({
+  model: google("models/gemini-2.0-flash-exp", { apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY }),
+  prompt,
+});;
         return NextResponse.json({ text, source: "gemini" });
       } catch (geminiError: any) {
         console.error("Gemini API failed:", geminiError.message);
