@@ -31,35 +31,58 @@ const Homepage = () => {
     AimEntered: false,
     dietEntered: false,
   });
+  // const [aiResp, setAiResp] = useState<React.JSX.Element | string>(
 
-  // --- NEW STATE FOR LOADING ---
-  const [isLoading, setIsLoading] = useState(false);
+  //   <div className="flex flex-col space-y-2">
+  //     <Skeleton className="h-4 w-[500px]" />
+  //     <Skeleton className="h-4 w-[450px]" />
+  //     <Skeleton className="h-4 w-[500px]" />
+  //     <Skeleton className="h-4 w-[450px]" />
+  //   </div>,
 
+  // );
+  // const [aiResp, setAiResp] = useState<React.JSX.Element | string>({
+
+  //   workoutPlan:<div className="flex flex-col space-y-2">
+  //     <Skeleton className="h-4 w-[500px]" />
+  //     <Skeleton className="h-4 w-[450px]" />
+  //     <Skeleton className="h-4 w-[500px]" />
+  //     <Skeleton className="h-4 w-[450px]" />
+  //   </div>,
+  //   dietPlan:<div className="flex flex-col space-y-2">
+  //   <Skeleton className="h-4 w-[500px]" />
+  //   <Skeleton className="h-4 w-[450px]" />
+  //   <Skeleton className="h-4 w-[500px]" />
+  //   <Skeleton className="h-4 w-[450px]" />
+  // </div>,
+  // }
+
+  // );
   const [aiWoResp, setAiWoResp] = useState<React.JSX.Element | string>(() => (
-    <div className={styles.skeletonChat}>
+     <div className={styles.skeletonChat}>
+      
       <Skeleton className={styles.skeleton1} />
       <Skeleton className={styles.skeleton2} />
       <Skeleton className={styles.skeleton1} />
       <Skeleton className={styles.skeleton2} />
-    </div>
+    
+  </div>
   ));
   const [aiDietResp, setAiDietResp] = useState<React.JSX.Element | string>(
     () => (
       <div className={styles.skeletonChat}>
+      
         <Skeleton className={styles.skeleton1} />
         <Skeleton className={styles.skeleton2} />
         <Skeleton className={styles.skeleton1} />
         <Skeleton className={styles.skeleton2} />
-      </div>
-    )
-  );
-
+      
+    </div>
+  ));
+  // const [prompt, setPrompt] = useState("");
   const [dispDiet, setDispdiet] = useState<"Yes" | "No">();
   const [diet, setdiet] = useState<
-    | "Halal Non-Vegetarian do not include any pork, pig, bacon, ham, or any dishes containing alcohol"
-    | "Vegeterian"
-    | "Eggeterian"
-    | undefined
+    "Halal Non-Vegetarian do not include any pork, pig, bacon, ham, or any dishes containing alcohol" | "Vegeterian" | "Eggeterian"
   >();
 
   const changeHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -89,90 +112,38 @@ const Homepage = () => {
     );
   };
 
-  // -----------------------------------------------------------------
-  // --- THIS IS THE UPDATED API FUNCTION (WITH BETTER ERRORS) ---
-  // -----------------------------------------------------------------
-  const promptSend = async (promptText: string, type: "workout" | "diet") => {
-    setIsLoading(true);
-    // Clear the previous response and show skeletons
-    if (type === "workout") {
-      setAiWoResp(
-        <div className={styles.skeletonChat}>
-          <Skeleton className={styles.skeleton1} />
-          <Skeleton className={styles.skeleton2} />
-        </div>
-      );
-    } else {
-      setAiDietResp(
-        <div className={styles.skeletonChat}>
-          <Skeleton className={styles.skeleton1} />
-          <Skeleton className={styles.skeleton2} />
-        </div>
-      );
-    }
+const promptSend = async (promptText: string, type: "workout" | "diet") => {
+    const response = await fetch("/api/gemini", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt: promptText }),
+    });
 
-    try {
-      // This now calls YOUR OWN Next.js API route
-      const response = await fetch("/api/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: promptText }),
-      });
+    const data = await response.json();
 
-      // --- NEW HUGGING FACE ERROR HANDLING (IMPROVED) ---
-      if (!response.ok) {
-        let errorMsg = "Sorry, I ran into an error. Please try again.";
-        const contentType = response.headers.get("content-type");
-
-        if (response.status === 503) {
-          errorMsg =
-            "The AI is warming up. Please wait 20 seconds and try again.";
-        } else if (response.status === 429) {
-          errorMsg =
-            "Sorry, I'm a bit overwhelmed right now. Please try again in a minute.";
-        } else if (response.status === 404) {
-          errorMsg =
-            "API route not found (404). Did you create the 'app/api/generate/route.ts' file?";
-        } else if (contentType && contentType.includes("application/json")) {
-          // It's a 500 or 400 with a JSON error from our route
-          const errData = await response.json();
-          console.error("Error from API route:", errData);
-          // This will show the specific error, like "HF_TOKEN environment variable is not set"
-          errorMsg = `Server Error: ${errData.error || response.statusText}`;
-        } else {
-          // It's a 500 error with HTML, or some other unexpected response
-          const errText = await response.text();
-          console.error("Non-JSON Error from API route:", errText);
-          errorMsg = `Server error (${response.status}). Check Vercel logs.`;
-        }
-
-        if (type === "workout") setAiWoResp(errorMsg);
-        else setAiDietResp(errorMsg);
-
-        setIsLoading(false);
-        return; // Stop the function here
-      }
-
-      const data = await response.json();
-
-      // Success! Get the generated text.
-      const aiText = data.generated_text;
-
+    // --- THIS IS THE FIX ---
+    // Check if the server sent an error back
+    if (data.error) {
+      console.error("Error from API:", data.details);
+      const errorMsg = "Sorry, I ran into an error. Please make sure your GOOGLE_API_KEY is set up correctly and try again.";
+      
       if (type === "workout") {
-        setAiWoResp(aiText);
+        setAiWoResp(errorMsg);
       } else if (type === "diet") {
-        setAiDietResp(aiText);
+        setAiDietResp(errorMsg);
       }
-    } catch (error) {
-      console.error("Failed to fetch from API route:", error);
-      const errorMsg = "Sorry, I ran into an error. Please try again.";
-      if (type === "workout") setAiWoResp(errorMsg);
-      else setAiDietResp(errorMsg);
-    } finally {
-      setIsLoading(false);
+      return data;
     }
+    // --- END OF FIX ---
+
+    // This part will only run if there was NO error
+    if (type === "workout") {
+      setAiWoResp(data.text);
+    } else if (type === "diet") {
+      setAiDietResp(data.text);
+    }
+    return data;
   };
-  // --- END OF UPDATED API FUNCTION ---
 
   function parseMarkdownToHtml(text: string): string {
     // Convert **bold** text to <strong>bold</strong>
@@ -250,8 +221,7 @@ const Homepage = () => {
     <div className="p-10 sm:text-sm sm:p-6">
       <div className="flex flex-col justify-center items-center w-full">
         <h1 className="text-5xl my-7 text-center">
-          Welcome to Gul's{" "}
-          <span className="bg-muted rounded-xl px-2">Fitness Club</span>!
+          Welcome to Gul's <span className="bg-muted rounded-xl px-2">Fitness Club</span>!
         </h1>
         <div>One Place For All Your Fitness Needs.</div>
       </div>
@@ -281,8 +251,7 @@ const Homepage = () => {
         {chatTracker.nameEntered && (
           <div className="flex flex-col justify-end items-end">
             <div className={styles.chat}>
-              Merhaba {details.name}, Let&apos;s get you in the best shape of
-              your life!
+                 Merhaba {details.name}, Let&apos;s get you in the best shape of your life!
             </div>
             <div className="flex flex-col justify-end items-end">
               <div className={styles.chat}>Tell me about yourself</div>
@@ -437,16 +406,17 @@ const Homepage = () => {
                     variant="secondary"
                     className={styles.submitbtn}
                     name="AimEntered"
-                    disabled={isLoading} // Disable button when loading
                     onClick={(e) => {
                       chatHandler(e);
+                      // const newPrompt = `Hi I am a ${details.age} year old ${gender} with ${details.weight} kg weight and ${details.height} inches height and ${bodyFatPercentage}% body Fat percentage I aim to have ${fitnessGoals} create a workout routine/plan for me. Reply very concisely with only the workout plan and absolutely nothing else. The plan should be in clear and in detail. No extra information or text just the workout plan since I want to copy and paste it.`;
+                      // setPrompt(prompt);
                       promptSend(
                         `Hi I am a ${details.age} year old ${gender} with ${details.weight} kg weight and ${details.height} inches height and ${bodyFatPercentage}% body Fat percentage I aim to have ${fitnessGoals} create a workout routine/plan for me. Reply very concisely with only the workout plan and absolutely nothing else. The plan should be in clear and in detail. No extra information or text just the workout plan since I want to copy and paste it.`,
                         "workout"
                       );
                     }}
                   >
-                    {isLoading && dispDiet !== "Yes" ? "Generating..." : "Submit"}
+                    Submit
                   </Button>
                 </div>
               </div>
@@ -458,15 +428,12 @@ const Homepage = () => {
                   <div className={styles.chat}>
                     Here is your personalised workout plan
                   </div>
-                  {/* --- THIS IS THE FIX (Line 425) --- */}
-                  {/* It was <div ... />, now it is <div></div> */}
                   <div
                     className={styles.chat}
                     dangerouslySetInnerHTML={{
                       __html: parseMarkdownToHtml(aiWoResp),
                     }}
-                  ></div>
-                  {/* --- END OF FIX --- */}
+                  />
                   <div className={styles.chat}>
                     Would you like a specific diet plan as well?
                   </div>
@@ -493,7 +460,7 @@ const Homepage = () => {
                   </ToggleGroup>
                 </div>
               ) : (
-                <div>{aiWoResp}</div> // This will show the skeleton
+                <div>{aiWoResp}</div>
               ))}
             {chatTracker.AimEntered && (
               <div className="flex flex-col justify-end items-end"></div>
@@ -512,12 +479,7 @@ const Homepage = () => {
                   <ToggleGroupItem
                     value="Non-Vegetarian"
                     className={styles.toggleBtn}
-                    // --- THIS IS THE FIX ---
-                    onClick={() =>
-                      setdiet(
-                        "Halal Non-Vegetarian do not include any pork, pig, bacon, ham, or any dishes containing alcohol"
-                      )
-                    }
+                    onClick={() => setdiet("Non-Vegetarian")}
                   >
                     Non-Vegeterian
                   </ToggleGroupItem>
@@ -540,16 +502,17 @@ const Homepage = () => {
                   variant="secondary"
                   className={styles.submitbtn}
                   name="dietEntered"
-                  disabled={isLoading} // Disable button when loading
                   onClick={(e) => {
                     chatHandler(e);
+                    // const newPrompt = `Hi I am a ${details.age} year old ${gender} with ${details.weight} kg weight and ${details.height} inches height and ${bodyFatPercentage}% body Fat percentage I aim to have ${fitnessGoals} create a weekly diet plan for me I am a ${diet}. Reply very concisely with only the diet plan and absolutely nothing else. The plan should be in clear and in detail. No extra sentences or information just the diet plan`;
+                    // setPrompt(prompt);
                     promptSend(
                       `Hi I am a ${details.age} year old ${gender} with ${details.weight} kg weight and ${details.height} inches height and ${bodyFatPercentage}% body Fat percentage I aim to have ${fitnessGoals} create a weekly diet plan for me I am a ${diet} and do not include any pork, pig, bacon, ham, or any dishes containing alcohol halal food only". Reply very concisely with only the diet plan and absolutely nothing else. The plan should be in clear and in detail. No extra sentences or information just the diet plan`,
                       "diet"
                     );
                   }}
                 >
-                  {isLoading ? "Generating..." : "Submit"}
+                  Submit
                 </Button>
               </div>
             ) : dispDiet === "No" ? (
@@ -569,15 +532,12 @@ const Homepage = () => {
               (typeof aiDietResp === "string" ? (
                 <div className="w-full">
                   <div className="flex flex-col justify-end items-end">
-                    {/* --- THIS IS THE FIX (Line 600) --- */}
-                    {/* It was <div ... />, now it is <div></div> */}
                     <div
                       className={styles.chat}
                       dangerouslySetInnerHTML={{
                         __html: parseMarkdownToHtml(aiDietResp),
                       }}
-                    ></div>
-                    {/* --- END OF FIX --- */}
+                    />
                     <div className={styles.chat}>
                       You are all done! All the best in your Fitness Journey!
                     </div>
@@ -596,7 +556,7 @@ const Homepage = () => {
                 </div>
               ) : (
                 <div>
-                  {aiDietResp} {/* This will show the skeleton */}
+                  {aiDietResp}
                 </div>
               ))}
           </div>
@@ -613,3 +573,4 @@ const Homepage = () => {
 };
 
 export default Homepage;
+
