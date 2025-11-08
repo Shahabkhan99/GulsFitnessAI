@@ -87,7 +87,7 @@ const Homepage = () => {
   };
 
   // -----------------------------------------------------------------
-  // --- THIS IS THE UPDATED API FUNCTION (FOR HUGGING FACE) ---
+  // --- THIS IS THE UPDATED API FUNCTION (WITH BETTER ERRORS) ---
   // -----------------------------------------------------------------
   const promptSend = async (promptText: string, type: "workout" | "diet") => {
     setIsLoading(true);
@@ -119,32 +119,25 @@ const Homepage = () => {
       // --- NEW HUGGING FACE ERROR HANDLING (IMPROVED) ---
       if (!response.ok) {
         let errorMsg = "Sorry, I ran into an error. Please try again.";
-        
-        // The model is likely loading (a 503 Service Unavailable error)
+        const contentType = response.headers.get("content-type");
+
         if (response.status === 503) {
-          console.error("Model is loading. Please wait.");
           errorMsg = "The AI is warming up. Please wait 20 seconds and try again.";
-        }
-        // You hit the free rate limit (a 429 Too Many Requests error)
-        else if (response.status === 429) {
-          console.error("Rate limit hit.");
+        } else if (response.status === 429) {
           errorMsg = "Sorry, I'm a bit overwhelmed right now. Please try again in a minute.";
+        } else if (response.status === 404) {
+          errorMsg = "API route not found (404). Did you create the 'app/api/generate/route.ts' file?";
+        } else if (contentType && contentType.includes("application/json")) {
+          // It's a 500 or 400 with a JSON error from our route
+          const errData = await response.json();
+          console.error("Error from API route:", errData);
+          // This will show the specific error, like "HF_TOKEN environment variable is not set"
+          errorMsg = `Server Error: ${errData.error || response.statusText}`;
         } else {
-          // --- THIS IS THE NEW PART ---
-          // General error from our OWN API route (like 500 or 400)
-          try {
-            // Try to parse the error message from our /api/generate route
-            const errData = await response.json(); 
-            console.error("Error from API route:", errData);
-            // Use the specific error message from the server
-            errorMsg = errData.error || errorMsg; 
-          } catch (e) {
-            // The error response wasn't JSON, just plain text
-            const errText = await response.text();
-            console.error("Error from API (not JSON):", errText);
-            // We can't show the text, it might be HTML. Stick to the generic message.
-          }
-          // --- END OF NEW PART ---
+          // It's a 500 error with HTML, or some other unexpected response
+          const errText = await response.text();
+          console.error("Non-JSON Error from API route:", errText);
+          errorMsg = `Server error (${response.status}). Check Vercel logs.`;
         }
 
         if (type === "workout") setAiWoResp(errorMsg);
@@ -445,7 +438,7 @@ const Homepage = () => {
                       );
                     }}
                   >
-                    {isLoading ? "Generating..." : "Submit"}
+                    {isLoading && dispDiet !== "Yes" ? "Generating..." : "Submit"}
                   </Button>
                 </div>
               </div>
@@ -542,7 +535,7 @@ const Homepage = () => {
                   }}
                 >
                   {isLoading ? "Generating..." : "Submit"}
-                </Button>
+                </DButton>
               </div>
             ) : dispDiet === "No" ? (
               <div className="flex flex-col justify-end items-end">
