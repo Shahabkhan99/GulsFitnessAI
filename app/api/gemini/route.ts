@@ -11,7 +11,7 @@ export async function POST(req: Request) {
     if (geminiKey) {
       try {
         const { text } = await generateText({
-          model: google("models/gemini-2.0-flash-exp", { apiKey: geminiKey }),
+          model: google("models/gemini-2.0-flash-exp"),
           prompt,
         });
         return NextResponse.json({ text, source: "gemini" });
