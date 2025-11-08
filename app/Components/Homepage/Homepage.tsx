@@ -456,6 +456,16 @@ const Homepage = () => {
                       __html: parseMarkdownToHtml(aiWoResp),
                     }}
                   />
+                  {/* --- THIS IS THE FIX (Line 421-426) --- */}
+                  {/* This div was self-closing (/>), which is a syntax error. */}
+                  {/* It must be <div></div>. */}
+                  <div
+                    className={styles.chat}
+                    dangerouslySetInnerHTML={{
+                      __html: parseMarkdownToHtml(aiWoResp),
+                    }}
+                  ></div>
+                  {/* --- END OF FIX --- */}
                   <div className={styles.chat}>
                     Would you like a specific diet plan as well?
                   </div>
@@ -554,12 +564,16 @@ const Homepage = () => {
               (typeof aiDietResp === "string" ? (
                 <div className="w-full">
                   <div className="flex flex-col justify-end items-end">
+                    {/* --- THIS IS THE FIX (Line 519-524) --- */}
+                    {/* This div was self-closing (/>), which is a syntax error. */}
+                    {/* It must be <div></div>. */}
                     <div
                       className={styles.chat}
                       dangerouslySetInnerHTML={{
                         __html: parseMarkdownToHtml(aiDietResp),
                       }}
-                    />
+                    ></div>
+                    {/* --- END OF FIX --- */}
                     <div className={styles.chat}>
                       You are all done! All the best in your Fitness Journey!
                     </div>
