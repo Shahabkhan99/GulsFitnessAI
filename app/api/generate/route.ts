@@ -2,10 +2,12 @@ import { NextResponse } from 'next/server';
 
 // This is the new Hugging Face API call
 async function queryHuggingFace(prompt: string) {
-  // This is the free model we're using
-  const API_URL = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.1";
-  
   // --- THIS IS THE FIX ---
+  // The old model (Mistral-7B-v0.1) is "Gone" (410 error).
+  // We are switching to a newer, more powerful Llama 3 model.
+  const API_URL = "https://api-inference.huggingface.co/models/meta-llama/Meta-Llama-3-8B-Instruct";
+  // --- END OF FIX ---
+  
   // We use HF_TOKEN for both the environment variable and the JS variable.
   const HF_TOKEN = process.env.HF_TOKEN; 
 
