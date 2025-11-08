@@ -56,7 +56,10 @@ const Homepage = () => {
 
   const [dispDiet, setDispdiet] = useState<"Yes" | "No">();
   const [diet, setdiet] = useState<
-    "Halal Non-Vegetarian do not include any pork, pig, bacon, ham, or any dishes containing alcohol" | "Vegeterian" | "Eggeterian" | undefined
+    | "Halal Non-Vegetarian do not include any pork, pig, bacon, ham, or any dishes containing alcohol"
+    | "Vegeterian"
+    | "Eggeterian"
+    | undefined
   >();
 
   const changeHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -122,11 +125,14 @@ const Homepage = () => {
         const contentType = response.headers.get("content-type");
 
         if (response.status === 503) {
-          errorMsg = "The AI is warming up. Please wait 20 seconds and try again.";
+          errorMsg =
+            "The AI is warming up. Please wait 20 seconds and try again.";
         } else if (response.status === 429) {
-          errorMsg = "Sorry, I'm a bit overwhelmed right now. Please try again in a minute.";
+          errorMsg =
+            "Sorry, I'm a bit overwhelmed right now. Please try again in a minute.";
         } else if (response.status === 404) {
-          errorMsg = "API route not found (404). Did you create the 'app/api/generate/route.ts' file?";
+          errorMsg =
+            "API route not found (404). Did you create the 'app/api/generate/route.ts' file?";
         } else if (contentType && contentType.includes("application/json")) {
           // It's a 500 or 400 with a JSON error from our route
           const errData = await response.json();
@@ -142,7 +148,7 @@ const Homepage = () => {
 
         if (type === "workout") setAiWoResp(errorMsg);
         else setAiDietResp(errorMsg);
-        
+
         setIsLoading(false);
         return; // Stop the function here
       }
@@ -244,7 +250,8 @@ const Homepage = () => {
     <div className="p-10 sm:text-sm sm:p-6">
       <div className="flex flex-col justify-center items-center w-full">
         <h1 className="text-5xl my-7 text-center">
-          Welcome to Gul's <span className="bg-muted rounded-xl px-2">Fitness Club</span>!
+          Welcome to Gul's{" "}
+          <span className="bg-muted rounded-xl px-2">Fitness Club</span>!
         </h1>
         <div>One Place For All Your Fitness Needs.</div>
       </div>
@@ -274,7 +281,8 @@ const Homepage = () => {
         {chatTracker.nameEntered && (
           <div className="flex flex-col justify-end items-end">
             <div className={styles.chat}>
-              Merhaba {details.name}, Let&apos;s get you in the best shape of your life!
+              Merhaba {details.name}, Let&apos;s get you in the best shape of
+              your life!
             </div>
             <div className="flex flex-col justify-end items-end">
               <div className={styles.chat}>Tell me about yourself</div>
@@ -450,15 +458,8 @@ const Homepage = () => {
                   <div className={styles.chat}>
                     Here is your personalised workout plan
                   </div>
-                  <div
-                    className={styles.chat}
-                    dangerouslySetInnerHTML={{
-                      __html: parseMarkdownToHtml(aiWoResp),
-                    }}
-                  />
-                  {/* --- THIS IS THE FIX (Line 421-426) --- */}
-                  {/* This div was self-closing (/>), which is a syntax error. */}
-                  {/* It must be <div></div>. */}
+                  {/* --- THIS IS THE FIX (Line 425) --- */}
+                  {/* It was <div ... />, now it is <div></div> */}
                   <div
                     className={styles.chat}
                     dangerouslySetInnerHTML={{
@@ -512,7 +513,11 @@ const Homepage = () => {
                     value="Non-Vegetarian"
                     className={styles.toggleBtn}
                     // --- THIS IS THE FIX ---
-                    onClick={() => setdiet("Halal Non-Vegetarian do not include any pork, pig, bacon, ham, or any dishes containing alcohol")}
+                    onClick={() =>
+                      setdiet(
+                        "Halal Non-Vegetarian do not include any pork, pig, bacon, ham, or any dishes containing alcohol"
+                      )
+                    }
                   >
                     Non-Vegeterian
                   </ToggleGroupItem>
@@ -564,9 +569,8 @@ const Homepage = () => {
               (typeof aiDietResp === "string" ? (
                 <div className="w-full">
                   <div className="flex flex-col justify-end items-end">
-                    {/* --- THIS IS THE FIX (Line 519-524) --- */}
-                    {/* This div was self-closing (/>), which is a syntax error. */}
-                    {/* It must be <div></div>. */}
+                    {/* --- THIS IS THE FIX (Line 600) --- */}
+                    {/* It was <div ... />, now it is <div></div> */}
                     <div
                       className={styles.chat}
                       dangerouslySetInnerHTML={{
