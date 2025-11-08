@@ -113,6 +113,7 @@ const Homepage = () => {
   };
 
 const promptSend = async (promptText: string, type: "workout" | "diet") => {
+  try {
     const response = await fetch("/api/gemini", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -121,29 +122,25 @@ const promptSend = async (promptText: string, type: "workout" | "diet") => {
 
     const data = await response.json();
 
-    // --- THIS IS THE FIX ---
-    // Check if the server sent an error back
     if (data.error) {
       console.error("Error from API:", data.details);
-      const errorMsg = "Sorry, I ran into an error. Please make sure your GOOGLE_API_KEY is set up correctly and try again.";
-      
-      if (type === "workout") {
-        setAiWoResp(errorMsg);
-      } else if (type === "diet") {
-        setAiDietResp(errorMsg);
-      }
-      return data;
+      const errorMsg = "Sorry, I ran into an error. Please try again later.";
+      if (type === "workout") setAiWoResp(errorMsg);
+      else if (type === "diet") setAiDietResp(errorMsg);
+      return;
     }
-    // --- END OF FIX ---
 
-    // This part will only run if there was NO error
-    if (type === "workout") {
-      setAiWoResp(data.text);
-    } else if (type === "diet") {
-      setAiDietResp(data.text);
-    }
-    return data;
-  };
+    // Use whatever text was returned (Gemini or Hugging Face fallback)
+    if (type === "workout") setAiWoResp(data.text);
+    else if (type === "diet") setAiDietResp(data.text);
+
+  } catch (err) {
+    console.error("Network error:", err);
+    const errorMsg = "Network error. Please try again later.";
+    if (type === "workout") setAiWoResp(errorMsg);
+    else if (type === "diet") setAiDietResp(errorMsg);
+  }
+};
 
   function parseMarkdownToHtml(text: string): string {
     // Convert **bold** text to <strong>bold</strong>
