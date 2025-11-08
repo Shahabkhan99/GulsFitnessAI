@@ -1,7 +1,6 @@
 import { generateText } from "ai";
 import { google } from "@ai-sdk/google";
 import { NextResponse } from "next/server";
-import fetch from "node-fetch"; // For Hugging Face fallback
 
 export async function POST(req: Request) {
   try {
@@ -43,7 +42,6 @@ export async function POST(req: Request) {
     }
 
     const hfData = await hfResponse.json();
-    // Hugging Face outputs can be an array with {generated_text} or a string
     const text = Array.isArray(hfData) ? hfData[0]?.generated_text || "" : hfData.generated_text || "";
 
     return NextResponse.json({ text, source: "huggingface" });
