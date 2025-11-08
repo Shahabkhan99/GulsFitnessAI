@@ -535,7 +535,7 @@ const Homepage = () => {
                   }}
                 >
                   {isLoading ? "Generating..." : "Submit"}
-                </DButton>
+                </Button>
               </div>
             ) : dispDiet === "No" ? (
               <div className="flex flex-col justify-end items-end">
