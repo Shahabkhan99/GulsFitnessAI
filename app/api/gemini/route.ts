@@ -6,8 +6,7 @@ export async function POST(req: Request) {
   try {
     const { prompt } = await req.json();
 
-    const apiKey = process.env.GOOGLE_API_KEY;
-    if (!apiKey) {
+    if (!process.env.GOOGLE_API_KEY) {
       console.error("GOOGLE_API_KEY is missing!");
       return NextResponse.json(
         { error: true, details: "GOOGLE_API_KEY is missing" },
@@ -15,8 +14,9 @@ export async function POST(req: Request) {
       );
     }
 
+    // API key is automatically picked up from process.env.GOOGLE_API_KEY
     const { text } = await generateText({
-      model: google("models/gemini-2.0-flash-exp", { apiKey }),
+      model: google("models/gemini-2.0-flash-exp"),
       prompt,
     });
 
