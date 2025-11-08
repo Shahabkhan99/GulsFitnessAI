@@ -497,7 +497,7 @@ const Homepage = () => {
                   <ToggleGroupItem
                     value="Non-Vegetarian"
                     className={styles.toggleBtn}
-                    onClick={() => setdiet("Non-Vegetarian")}
+                    onClick={() => setdiet("Halal Non-Vegetarian do not include any pork, pig, bacon, ham, or any dishes containing alcohol")}
                   >
                     Non-Vegeterian
                   </ToggleGroupItem>
