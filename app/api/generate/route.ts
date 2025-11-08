@@ -3,24 +3,25 @@ import { NextResponse } from 'next/server';
 // This is the new Hugging Face API call
 async function queryHuggingFace(prompt: string) {
   // --- THIS IS THE FIX ---
-  // The old model (Mistral-7B-v0.1) is "Gone" (410 error).
-  // We are switching to a newer, more powerful Llama 3 model.
-  const API_URL = "https://api-inference.huggingface.co/models/meta-llama/Meta-Llama-3-8B-Instruct";
+  // Both Mistral and Llama 3 are giving 410 "Gone" errors,
+  // meaning they've been removed from the free tier.
+  // We are switching to a reliable, free Google model.
+  const API_URL = "https://api-inference.huggingface.co/models/google/flan-t5-large";
   // --- END OF FIX ---
   
   // We use HF_TOKEN for both the environment variable and the JS variable.
   const HF_TOKEN = process.env.HF_TOKEN; 
-
+  
   if (!HF_TOKEN) {
-    // This error message will be shown to the user if the key is missing in Vercel
-    return NextResponse.json({ error: "HF_TOKEN environment variable is not set in Vercel" }, { status: 500 });
+    // This will be caught by the client and displayed
+    throw new Error("HF_TOKEN environment variable is not set");
   }
 
   const payload = {
     inputs: prompt,
     parameters: {
       max_new_tokens: 500, // Limit the length of the response
-      return_full_text: false, // Only return the AI's response, not your prompt
+      return_full_text: false, // Only return the AI's response
     },
   };
 
@@ -28,12 +29,10 @@ async function queryHuggingFace(prompt: string) {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      // We pass the HF_TOKEN to Hugging Face
-      "Authorization": `Bearer ${HF_TOKEN}`, 
+      "Authorization": `Bearer ${HF_TOKEN}`,
     },
     body: JSON.stringify(payload),
   });
-  // --- END OF FIX ---
 
   if (!response.ok) {
     // Pass the error status from Hugging Face back to your component
@@ -58,7 +57,8 @@ export async function POST(request: Request) {
     return await queryHuggingFace(prompt);
 
   } catch (error: any) {
-    console.error("Error in API route:", error.message);
+    console.error("Error in API route:", error);
+    // This will now pass the "HF_TOKEN is not set" error to the client
     return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
   }
 }
