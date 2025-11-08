@@ -5,11 +5,13 @@ async function queryHuggingFace(prompt: string) {
   // This is the free model we're using
   const API_URL = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.1";
   
-  // This securely gets your key from Vercel's environment variables
-  const HF_API_KEY = process.env.HF_TOKEN; 
+  // --- THIS IS THE FIX ---
+  // We use HF_TOKEN for both the environment variable and the JS variable.
+  const HF_TOKEN = process.env.HF_TOKEN; 
 
-  if (!HF_API_KEY) {
-    throw new Error("HF_TOKEN environment variable is not set");
+  if (!HF_TOKEN) {
+    // This error message will be shown to the user if the key is missing in Vercel
+    return NextResponse.json({ error: "HF_TOKEN environment variable is not set in Vercel" }, { status: 500 });
   }
 
   const payload = {
@@ -24,10 +26,12 @@ async function queryHuggingFace(prompt: string) {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${HF_API_KEY}`,
+      // We pass the HF_TOKEN to Hugging Face
+      "Authorization": `Bearer ${HF_TOKEN}`, 
     },
     body: JSON.stringify(payload),
   });
+  // --- END OF FIX ---
 
   if (!response.ok) {
     // Pass the error status from Hugging Face back to your component
