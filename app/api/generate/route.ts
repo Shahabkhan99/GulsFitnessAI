@@ -1,64 +1,88 @@
-import { NextResponse } from 'next/server';
+import { generateText } from "ai";
+import { google } from "@ai-sdk/google";
+import { NextResponse } from "next/server";
 
-// This is the new Hugging Face API call
-async function queryHuggingFace(prompt: string) {
-  // --- THIS IS THE FIX ---
-  // Both Mistral and Llama 3 are giving 410 "Gone" errors,
-  // meaning they've been removed from the free tier.
-  // We are switching to a reliable, free Google model.
-  const API_URL = "https://api-inference.huggingface.co/models/google/flan-t5-large";
-  // --- END OF FIX ---
-  
-  // We use HF_TOKEN for both the environment variable and the JS variable.
-  const HF_TOKEN = process.env.HF_TOKEN; 
-  
-  if (!HF_TOKEN) {
-    // This will be caught by the client and displayed
-    throw new Error("HF_TOKEN environment variable is not set");
-  }
+const cache = new Map<string, string>();
 
-  const payload = {
-    inputs: prompt,
-    parameters: {
-      max_new_tokens: 500, // Limit the length of the response
-      return_full_text: false, // Only return the AI's response
-    },
-  };
-
-  const response = await fetch(API_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${HF_TOKEN}`,
-    },
-    body: JSON.stringify(payload),
-  });
-
-  if (!response.ok) {
-    // Pass the error status from Hugging Face back to your component
-    return new NextResponse(await response.text(), { status: response.status });
-  }
-
-  const data = await response.json();
-  // The response is an array, so we take the first item.
-  return NextResponse.json({ generated_text: data[0].generated_text });
-}
-
-// This is the POST function that your Homepage.tsx component will call
-export async function POST(request: Request) {
+export async function POST(req: Request) {
   try {
-    const { prompt } = await request.json();
-    
-    if (!prompt) {
-      return NextResponse.json({ error: "Prompt is required" }, { status: 400 });
+    const { prompt } = await req.json();
+    if (!prompt || typeof prompt !== "string") {
+      return NextResponse.json({ error: "Invalid prompt" }, { status: 400 });
     }
 
-    // Call the secure function
-    return await queryHuggingFace(prompt);
+    if (cache.has(prompt)) {
+      return NextResponse.json({
+        text: cache.get(prompt),
+        source: "cache",
+      });
+    }
+
+    let text = "";
+    let source = "";
+
+    // --- Gemini first ---
+    const geminiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+    if (geminiKey) {
+      try {
+        const geminiResp = await generateText({
+          model: google("models/gemini-2.0-flash-exp"),
+          prompt,
+        });
+        text = geminiResp.text;
+        source = "gemini";
+      } catch (err: any) {
+        console.warn("⚠️ Gemini failed:", err.message);
+      }
+    }
+
+    // --- Hugging Face fallback ---
+    if (!text) {
+      const hfKey = process.env.HF_API_KEY;
+      if (!hfKey) throw new Error("HF_API_KEY missing in environment");
+
+      const model = "mistralai/Mistral-7B-Instruct-v0.3";
+      const url = `https://api-inference.huggingface.co/models/${model}`;
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${hfKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          inputs: prompt,
+          parameters: {
+            max_new_tokens: 300,
+            temperature: 0.7,
+            return_full_text: false,
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        console.error("Hugging Face error response:", errText);
+        throw new Error(`Hugging Face API error: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      text = Array.isArray(data)
+        ? data[0]?.generated_text || ""
+        : data.generated_text || "";
+      source = "huggingface";
+    }
+
+    if (!text) throw new Error("No AI output generated");
+
+    cache.set(prompt, text);
+    return NextResponse.json({ text, source });
 
   } catch (error: any) {
-    console.error("Error in API route:", error);
-    // This will now pass the "HF_TOKEN is not set" error to the client
-    return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
+    console.error("❌ API crash:", error);
+    return NextResponse.json(
+      { error: true, message: error.message || "Internal error" },
+      { status: 500 }
+    );
   }
 }
