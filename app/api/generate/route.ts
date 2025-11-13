@@ -11,6 +11,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid prompt" }, { status: 400 });
     }
 
+    // Cache
     if (cache.has(prompt)) {
       return NextResponse.json({
         text: cache.get(prompt),
@@ -21,7 +22,7 @@ export async function POST(req: Request) {
     let text = "";
     let source = "";
 
-    // --- Gemini first ---
+    // 1️⃣ Try Gemini
     const geminiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
     if (geminiKey) {
       try {
@@ -36,13 +37,14 @@ export async function POST(req: Request) {
       }
     }
 
-    // --- Hugging Face fallback ---
+    // 2️⃣ Fallback: Hugging Face (NEW router URL)
     if (!text) {
       const hfKey = process.env.HF_API_KEY;
       if (!hfKey) throw new Error("HF_API_KEY missing in environment");
 
+      // ✅ Updated base URL and model name
       const model = "mistralai/Mistral-7B-Instruct-v0.3";
-      const url = `https://api-inference.huggingface.co/models/${model}`;
+      const url = `https://router.huggingface.co/hf-inference/${model}`;
 
       const response = await fetch(url, {
         method: "POST",
