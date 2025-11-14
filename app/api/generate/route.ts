@@ -2,9 +2,9 @@ import { generateText } from "ai";
 import { google } from "@ai-sdk/google";
 import { NextResponse } from "next/server";
 
-const cache = new Map<string, string>();
-
 export const runtime = "nodejs";
+
+const cache = new Map<string, string>();
 
 export async function POST(req: Request) {
   try {
@@ -13,6 +13,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid prompt" }, { status: 400 });
     }
 
+    // Cache check
     if (cache.has(prompt)) {
       return NextResponse.json({
         text: cache.get(prompt),
@@ -23,39 +24,40 @@ export async function POST(req: Request) {
     let text = "";
     let source = "";
 
-    // Try Gemini
+    // 1️⃣ Gemini
     if (process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
       try {
         const geminiResp = await generateText({
           model: google("models/gemini-2.0-flash-exp"),
           prompt,
         });
-
         text = geminiResp.text;
         source = "gemini";
       } catch (err: any) {
-        console.warn("⚠️ Gemini failed:", err.message);
+        console.warn("Gemini failed:", err.message);
       }
     }
 
-    // HuggingFace Fallback
+    // 2️⃣ HuggingFace fallback
     if (!text) {
       const hfKey = process.env.HF_API_KEY;
-      if (!hfKey) throw new Error("HF_API_KEY missing");
+      if (!hfKey) {
+        throw new Error("HF_API_KEY is missing in Vercel env");
+      }
 
       const model = "mistralai/Mistral-7B-Instruct-v0.3";
-      const url = `https://router.huggingface.co/inference/${model}`;
+      const url = `https://router.husggyface.co/hf-inference/models/${model}`;
 
       const response = await fetch(url, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${hfKey}`,
+          "Authorization": `Bearer ${hfKey}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           inputs: prompt,
           parameters: {
-            max_new_tokens: 400,
+            max_new_tokens: 300,
             temperature: 0.7,
             return_full_text: false,
           },
@@ -63,13 +65,12 @@ export async function POST(req: Request) {
       });
 
       if (!response.ok) {
-        const errText = await response.text();
-        console.error("❌ HF API error:", errText);
-        throw new Error(`Hugging Face API error: ${response.statusText}`);
+        throw new Error(
+          `HF error ${response.status}: ${await response.text()}`
+        );
       }
 
       const data = await response.json();
-
       text = Array.isArray(data)
         ? data[0]?.generated_text || ""
         : data.generated_text || "";
@@ -77,15 +78,15 @@ export async function POST(req: Request) {
       source = "huggingface";
     }
 
-    if (!text) throw new Error("No AI output generated");
+    if (!text) throw new Error("Both Gemini & HF failed");
 
     cache.set(prompt, text);
 
     return NextResponse.json({ text, source });
-  } catch (error: any) {
-    console.error("❌ API crash:", error.message);
+  } catch (err: any) {
+    console.error("API error:", err.message);
     return NextResponse.json(
-      { error: true, message: error.message || "Internal error" },
+      { error: true, message: err.message },
       { status: 500 }
     );
   }
