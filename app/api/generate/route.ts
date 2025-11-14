@@ -45,8 +45,9 @@ export async function POST(req: Request) {
       const HF_KEY = process.env.HF_API_KEY;
       if (!HF_KEY) throw new Error("HF_API_KEY missing");
 
-    const model = "google/gemma-2-9b-it";
-    const url = `https://router.huggingface.co/hf-inference/models/${model}`;
+    const model = "ProsusAI/finbert";
+      // Corrected: Use the API inference endpoint URL
+      const url = `https://api-inference.huggingface.co/models/${model}`;
 
       const r = await fetch(url, {
         method: "POST",
@@ -89,4 +90,5 @@ export async function POST(req: Request) {
     );
   }
 }
+
 
