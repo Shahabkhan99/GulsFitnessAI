@@ -9,11 +9,12 @@ const cache = new Map<string, string>();
 export async function POST(req: Request) {
   try {
     const { prompt } = await req.json();
-    if (!prompt || typeof prompt !== "string") {
-      return NextResponse.json({ error: "Invalid prompt" }, { status: 400 });
+
+    if (!prompt) {
+      return NextResponse.json({ error: "Prompt missing" }, { status: 400 });
     }
 
-    // Cache check
+    // Cache
     if (cache.has(prompt)) {
       return NextResponse.json({
         text: cache.get(prompt),
@@ -24,34 +25,34 @@ export async function POST(req: Request) {
     let text = "";
     let source = "";
 
-    // 1️⃣ Gemini
-    if (process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
-      try {
-        const geminiResp = await generateText({
+    // 1️⃣ Try Gemini
+    try {
+      if (process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
+        const resp = await generateText({
           model: google("models/gemini-2.0-flash-exp"),
           prompt,
         });
-        text = geminiResp.text;
+
+        text = resp.text;
         source = "gemini";
-      } catch (err: any) {
-        console.warn("Gemini failed:", err.message);
       }
+    } catch (err: any) {
+      console.warn("Gemini failed:", err.message);
     }
 
-    // 2️⃣ HuggingFace fallback
+    // 2️⃣ Fallback: HuggingFace
     if (!text) {
-      const hfKey = process.env.HF_API_KEY;
-      if (!hfKey) {
-        throw new Error("HF_API_KEY is missing in Vercel env");
-      }
+      const HF_KEY = process.env.HF_API_KEY;
+      if (!HF_KEY) throw new Error("HF_API_KEY missing");
 
-      const model = "mistralai/Mistral-7B-Instruct-v0.3";
-      const url = `https://router.husggyface.co/hf-inference/models/${model}`;
+      const model = "google/gemma-2-9b-it";
 
-      const response = await fetch(url, {
+      const url = `https://router.huggingface.co/hf-inference/models/${model}`;
+
+      const r = await fetch(url, {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${hfKey}`,
+          Authorization: `Bearer ${HF_KEY}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -59,18 +60,16 @@ export async function POST(req: Request) {
           parameters: {
             max_new_tokens: 300,
             temperature: 0.7,
-            return_full_text: false,
           },
         }),
       });
 
-      if (!response.ok) {
-        throw new Error(
-          `HF error ${response.status}: ${await response.text()}`
-        );
+      if (!r.ok) {
+        throw new Error(`HF error ${r.status}: ${await r.text()}`);
       }
 
-      const data = await response.json();
+      const data = await r.json();
+
       text = Array.isArray(data)
         ? data[0]?.generated_text || ""
         : data.generated_text || "";
@@ -78,7 +77,7 @@ export async function POST(req: Request) {
       source = "huggingface";
     }
 
-    if (!text) throw new Error("Both Gemini & HF failed");
+    if (!text) throw new Error("No AI output generated");
 
     cache.set(prompt, text);
 
