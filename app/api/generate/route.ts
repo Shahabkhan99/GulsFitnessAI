@@ -29,7 +29,7 @@ export async function POST(req: Request) {
     try {
       if (process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
         const resp = await generateText({
-          model: google("models/gemini-2.0-flash-exp"),
+          model: google("models/gemini-2.0-flash"),
           prompt,
         });
 
@@ -90,5 +90,6 @@ export async function POST(req: Request) {
     );
   }
 }
+
 
 
